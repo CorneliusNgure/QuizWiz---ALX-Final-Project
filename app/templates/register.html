@@ -123,7 +123,7 @@
   <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
-      <a class="navbar-brand font-weight-bold" href="{{ url_for('home') }}">QuizWiz</a>
+      <a class="navbar-brand font-weight-bold" href="{{ url_for('main.home') }}">QuizWiz</a>
       <!-- <div class="social-icons">
         <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
         <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
@@ -144,7 +144,7 @@
     <section class="register-form">
       <h2 class="text-center">Create an Account</h2>
       <p class="text-center">
-        Already have an account? <a href="{{ url_for('sign_in') }}">Sign in here</a>.
+        Already have an account? <a href="{{ url_for('main.sign_in') }}">Sign in here</a>.
       </p>
       <form>
         <div class="form-group">

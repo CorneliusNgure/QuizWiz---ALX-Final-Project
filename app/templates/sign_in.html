@@ -109,17 +109,17 @@
   
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-light">
-    <a class="navbar-brand font-weight-bold" href="{{ url_for('home') }}">QuizWiz</a>
+    <a class="navbar-brand font-weight-bold" href="{{ url_for('main.home') }}">QuizWiz</a>
     <button class="navbar-toggler hamburger-menu" onclick="toggleMenu()">
       &#9776;
     </button>
     <div class="collapse navbar-collapse">
       <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+          <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('register') }}">Sign Up</a>
+          <a class="nav-link" href="{{ url_for('main.register') }}">Sign Up</a>
         </li>
         <li class="nav-item">
           <!-- <a class="nav-link" href="#achievements">Achievements</a> -->
@@ -134,7 +134,7 @@
             <a class="dropdown-item" href="https://github.com/CorneliusNgure"><i class="fab fa-github"></i> GitHub</a>
             <a class="dropdown-item" href="https://x.com/Zeros__n__Ones"><i class="fab fa-twitter"></i> Twitter</a>
             <a class="dropdown-item" href="https://www.linkedin.com/in/cornelius-ngure-93581a216/"><i class="fab fa-linkedin"></i> LinkedIn</a>
-            <a class="dropdown-item" href="{{ url_for('register') }}"><i class="fas fa-gamepad"></i> Games</a>
+            <a class="dropdown-item" href="{{ url_for('main.register') }}"><i class="fas fa-gamepad"></i> Games</a>
             <a class="dropdown-item" href="#"><i class="fas fa-comments"></i>Feedback</a>
           </div>
         </li>
@@ -151,7 +151,7 @@
   <!-- Sign-in Form -->
   <section class="signin-form">
     <h2 class="text-center">Sign In to QuizWiz</h2>
-    <p class="text-center">New here? <a href="{{ url_for('register') }}">Create an account</a> to start playing!</p>
+    <p class="text-center">New here? <a href="{{ url_for('main.register') }}">Create an account</a> to start playing!</p>
     <form>
       <div class="form-group">
         <input type="email" class="form-control" placeholder="Enter Email" required>
