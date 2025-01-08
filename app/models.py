@@ -1,12 +1,22 @@
 from app import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     quiz_sessions = db.relationship('QuizSession', backref='user', lazy=True)
+
+    def set_password(self, password):
+        """Hashes and stores the user's password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Verifies the user's password."""
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -24,7 +34,7 @@ class QuizSession(db.Model):
 class QuestionAttempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_session_id = db.Column(db.Integer, db.ForeignKey('quiz_session.id'), nullable=False)
-    question_text = db.Column(db.Text, nullable=False)
+    question_text = db.Column(db.Text, nullable=False)  # Keep as Text for flexibility
     is_correct = db.Column(db.Boolean, nullable=False)
     user_answer = db.Column(db.String(255), nullable=False)
     correct_answer = db.Column(db.String(255), nullable=False)

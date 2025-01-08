@@ -1,26 +1,70 @@
-from app import app, db
-import requests
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
 from .models import User, QuizSession, QuestionAttempt
-from flask import render_template, jsonify, request
+import requests
 
-@app.route("/home")
-def home():   
+# Define a blueprint
+main_bp = Blueprint("main", __name__)
+
+@main_bp.route("/home")
+def home():
     return render_template("home.html")
 
-
-@app.route("/register")
+@main_bp.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        if User.query.filter_by(email=email).first() or User.query.filter_by(username=username).first():
+            flash("Username or Email already exists", "danger")
+            return redirect(url_for("main.register"))
+
+        hashed_password = generate_password_hash(password)
+        user = User(username=username, email=email, password_hash=hashed_password)
+        db.session.add(user)
+        db.session.commit()
+
+        flash("Registration successful! Please log in.", "success")
+        return redirect(url_for("main.sign_in"))
+    
     return render_template("register.html")
 
-@app.route("/sign_in")
+@main_bp.route("/sign_in", methods=["GET", "POST"])
 def sign_in():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash, password):
+            session["user_id"] = user.id
+            session["username"] = user.username
+            flash("Login successful!", "success")
+            return redirect(url_for("main.trivia_arena"))
+        else:
+            flash("Invalid email or password", "danger")
+            return redirect(url_for("main.sign_in"))
+    
     return render_template("sign_in.html")
 
-@app.route("/play")
+@main_bp.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    session.pop("username", None)
+    flash("You have been logged out.", "info")
+    return redirect(url_for("main.home"))
+
+@main_bp.route("/play")
 def trivia_arena():
+    if "user_id" not in session:
+        flash("Please log in to play.", "warning")
+        return redirect(url_for("main.sign_in"))
     return render_template("trivia_arena.html")
 
-@app.route("/fetch_questions", methods=["GET"])
+@main_bp.route("/fetch_questions", methods=["GET"])
 def fetch_questions():
     category = request.args.get("category")
     difficulty = request.args.get("difficulty")
@@ -39,11 +83,14 @@ def fetch_questions():
         return jsonify(response.json())
     else:
         return jsonify({"error": "Failed to fetch questions"}), 500
-    
-@app.route("/submit_quiz", methods=["POST"])
+
+@main_bp.route("/submit_quiz", methods=["POST"])
 def submit_quiz():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
     data = request.json
-    user_id = data.get('user_id')
+    user_id = session["user_id"]
     answers = data.get('answers')  # List of answers with question text, user's answer, and correct answer
 
     user = User.query.get(user_id)

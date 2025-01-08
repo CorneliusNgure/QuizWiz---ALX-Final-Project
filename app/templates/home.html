@@ -151,7 +151,7 @@
   <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
-      <a class="navbar-brand font-weight-bold" href="{{ url_for('home') }}">QuizWiz</a>
+      <a class="navbar-brand font-weight-bold" href="{{ url_for('main.home') }}">QuizWiz</a>
       <button class="navbar-toggler hamburger-menu" onclick="toggleMenu()">
         &#9776;
       </button>
@@ -164,10 +164,10 @@
             <a class="nav-link" href="#testimonials">Testimonials</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('register') }}">Sign Up</a>
+            <a class="nav-link" href="{{ url_for('main.register') }}">Sign Up</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('sign_in') }}">Sign In</a>
+            <a class="nav-link" href="{{ url_for('main.sign_in') }}">Sign In</a>
           </li>
         </ul>
       </div>
@@ -179,7 +179,7 @@
       <p>
         Learn and have fun with quizzes. Compete, earn badges, and become a QuizWiz Wizard!
       </p>
-      <a href="{{ url_for('trivia_arena') }}" class="btn btn-primary btn-lg">Get Started</a>
+      <a href="{{ url_for('main.trivia_arena') }}" class="btn btn-primary btn-lg">Get Started</a>
     </section>
 
     <!-- Features Section -->
@@ -233,7 +233,7 @@
     <section id="sign-up" class="cta-section">
       <h2>Join QuizWiz Now!</h2>
       <p>Sign up and start your journey towards becoming a Quiz Wizard!</p>
-      <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Sign Up Now</a>
+      <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-lg">Sign Up Now</a>
     </section>
 
     <!-- Footer -->

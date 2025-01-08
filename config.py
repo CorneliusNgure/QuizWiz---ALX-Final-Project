@@ -9,18 +9,22 @@ class Config(object):
     DEBUG = False
     TESTING = False
 
+    # loading database credentials
     DB_NAME = os.getenv("DB_NAME")
     DB_USERNAME = os.getenv("DB_USERNAME")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
 
+    # loading the secret key
+    SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
+
     SESSION_COOKIE_SECURE = True
 
     @staticmethod
     def build_db_uri(username, password, host, port, db_name):
         """Builds the database URI from components"""
-        return f"postgresql://{username}:{password}@{host}:{port}/{db_name}"
+        return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
 
     DB_URI = build_db_uri(DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
