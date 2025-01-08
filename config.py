@@ -9,59 +9,69 @@ class Config(object):
     DEBUG = False
     TESTING = False
 
-    # loading database credentials
-    DB_NAME = os.getenv("DB_NAME")
+    # Load database credentials
     DB_USERNAME = os.getenv("DB_USERNAME")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_HOST = os.getenv("DB_HOST")
-    DB_PORT = os.getenv("DB_PORT")
-
-    # loading the secret key
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "3306")
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
 
     SESSION_COOKIE_SECURE = True
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     @staticmethod
     def build_db_uri(username, password, host, port, db_name):
         """Builds the database URI from components"""
         return f"mysql+pymysql://{username}:{password}@{host}:{port}/{db_name}"
 
-    DB_URI = build_db_uri(DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):
+        """Abstract method to ensure subclasses define the correct database"""
+        raise NotImplementedError("Subclasses must define SQLALCHEMY_DATABASE_URI")
 
-    SQLALCHEMY_DATABASE_URI = DB_URI
-    # Disable Flask-SQLAlchemy event system for performance reasons
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-class ProductionConfig(Config):
-    """Production-specific configuration"""
-    pass
 
 class DevelopmentConfig(Config):
     """Development-specific configuration"""
     DEBUG = True
     TESTING = True
 
-    DB_NAME = "quizwiz_development_db"
-    DB_URI = Config.build_db_uri(
-        os.getenv("DB_USERNAME"),
-        os.getenv("DB_PASSWORD"),
-        os.getenv("DB_HOST"),
-        os.getenv("DB_PORT"),
+    # Use environment-specific database name
+    DB_NAME = os.getenv("DB_NAME_DEV")
+    SQLALCHEMY_DATABASE_URI = Config.build_db_uri(
+        Config.DB_USERNAME,
+        Config.DB_PASSWORD,
+        Config.DB_HOST,
+        Config.DB_PORT,
         DB_NAME
     )
     SESSION_COOKIE_SECURE = False
+
 
 class TestingConfig(Config):
     """Testing-specific configuration"""
-    TESTING = True
     DEBUG = True
+    TESTING = True
 
-    DB_NAME = "quizwiz_testing_db"
-    DB_URI = Config.build_db_uri(
-        os.getenv("DB_USERNAME"),
-        os.getenv("DB_PASSWORD"),
-        os.getenv("DB_HOST"),
-        os.getenv("DB_PORT"),
+    # Use environment-specific database name
+    DB_NAME = os.getenv("DB_NAME_TEST")
+    SQLALCHEMY_DATABASE_URI = Config.build_db_uri(
+        Config.DB_USERNAME,
+        Config.DB_PASSWORD,
+        Config.DB_HOST,
+        Config.DB_PORT,
         DB_NAME
     )
     SESSION_COOKIE_SECURE = False
+
+
+class ProductionConfig(Config):
+    """Production-specific configuration"""
+    # Use environment-specific database name
+    DB_NAME = os.getenv("DB_NAME_PROD")
+    SQLALCHEMY_DATABASE_URI = Config.build_db_uri(
+        Config.DB_USERNAME,
+        Config.DB_PASSWORD,
+        Config.DB_HOST,
+        Config.DB_PORT,
+        DB_NAME
+    )
