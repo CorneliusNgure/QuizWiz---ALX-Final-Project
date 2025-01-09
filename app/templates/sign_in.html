@@ -121,9 +121,6 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('main.register') }}">Sign Up</a>
         </li>
-        <li class="nav-item">
-          <!-- <a class="nav-link" href="#achievements">Achievements</a> -->
-        </li>
       </ul>
       <ul class="navbar-nav mr-auto">
         <li class="nav-item dropdown">
@@ -135,7 +132,7 @@
             <a class="dropdown-item" href="https://x.com/Zeros__n__Ones"><i class="fab fa-twitter"></i> Twitter</a>
             <a class="dropdown-item" href="https://www.linkedin.com/in/cornelius-ngure-93581a216/"><i class="fab fa-linkedin"></i> LinkedIn</a>
             <a class="dropdown-item" href="{{ url_for('main.register') }}"><i class="fas fa-gamepad"></i> Games</a>
-            <a class="dropdown-item" href="#"><i class="fas fa-comments"></i>Feedback</a>
+            <a class="dropdown-item" href="#"><i class="fas fa-comments"></i> Feedback</a>
           </div>
         </li>
       </ul>
@@ -152,12 +149,12 @@
   <section class="signin-form">
     <h2 class="text-center">Sign In to QuizWiz</h2>
     <p class="text-center">New here? <a href="{{ url_for('main.register') }}">Create an account</a> to start playing!</p>
-    <form>
+    <form action="{{ url_for('main.sign_in') }}" method="POST">
       <div class="form-group">
-        <input type="email" class="form-control" placeholder="Enter Email" required>
+        <input type="email" class="form-control" placeholder="Enter Email" name="email" required>
       </div>
       <div class="form-group">
-        <input type="password" class="form-control" placeholder="Enter Password" required>
+        <input type="password" class="form-control" placeholder="Enter Password" name="password" required>
       </div>
       <button type="submit" class="btn btn-primary btn-block">Sign In</button>
       <p class="text-center mt-3"><a href="#">Forgot Password?</a></p>
