@@ -29,6 +29,10 @@ def create_app():
     app.config.from_object(ENV_CONFIGS.get(ENV, DevelopmentConfig))
     app.debug = app.config['DEBUG']
 
+    # warning if FLASK_ENV is not set
+    if not os.getenv("FLASK_ENV"):
+        app.logger.warning("FLASK_ENV not set, defaulting to 'development'")
+
     # setting the SECRET_KEY
     app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
@@ -41,6 +45,15 @@ def create_app():
 
     # registeration of blueprints
     with app.app_context():
-        from app.routes import main_bp
-        app.register_blueprint(main_bp)
+        try:
+            from app.routes import main_bp
+            app.register_blueprint(main_bp)
+
+            # Automatically create tables only for development or testing
+            if ENV in ["development", "testing"]:
+                db.create_all()
+                app.logger.info("Tables created automatically in development/testing.")
+        except ImportError as e:
+            app.logger.error(f"Error importing blueprint: {e}")
+    
     return app
