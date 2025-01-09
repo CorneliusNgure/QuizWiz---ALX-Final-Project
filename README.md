@@ -28,7 +28,7 @@ QuizWiz is a web application that allows users to test their knowledge by taking
 ### **Quick Start**
 1. Clone the repository:
    ```bash
-   git clone https://github.com/CorneliusNgure/QuizWiz.git
+   git clone https://github.com/CorneliusNgure/QuizWiz---ALX-Final-Project
    cd quizwiz
    ```
 2. Create a virtual environment and activate it:
