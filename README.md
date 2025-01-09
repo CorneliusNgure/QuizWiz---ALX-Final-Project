@@ -1,79 +1,121 @@
 # QuizWiz
 
-QuizWiz is a web application that allows users to test their knowledge by taking quizzes fetched dynamically from external APIs. The app keeps track of user scores, records each quiz session, and provides detailed feedback on attempted questions.
+QuizWiz is a web application that allows users to test their knowledge by taking quizzes fetched dynamically from external APIs. The app includes user authentication, tracks quiz history, and provides detailed feedback on attempted questions.
 
-## Features
+---
 
-- **Dynamic Question Fetching**: Questions are pulled from an external API to ensure varied and interesting content.
-- **User Management**: Tracks users and their quiz history.
-- **Quiz Sessions**: Records each quiz session and computes user scores.
+## **Features**
+- **Dynamic Question Fetching**: Questions are pulled from a third-party API (e.g., [Open Trivia Database](https://opentdb.com)) to ensure varied and engaging content.
+- **User Authentication**: Users can sign up, log in, and manage their sessions.
+- **Quiz Sessions**: Tracks each quiz session and computes user scores.
 - **Detailed Attempt Records**: Logs user answers and indicates correctness.
-- **Flask Backend**: Powered by Flask for server-side logic.
 - **Database Management**: Utilizes SQLAlchemy and Flask-Migrate for data handling and migrations.
+- **Flash Messages**: Provides feedback to users using dynamic flash messages.
 
-## Tech Stack
+---
 
+## **Tech Stack**
 - **Backend**: Flask, SQLAlchemy
-- **Database**: PostgreSQL
+- **Database**: MySQL
 - **Frontend**: HTML, CSS, JavaScript
-- **APIs**: Fetches quiz questions from a third-party API
+- **APIs**: Fetches quiz questions from the [Open Trivia Database](https://opentdb.com)
 - **Migrations**: Flask-Migrate
 
-## Getting Started
+---
 
-### Prerequisites
+## **Getting Started**
 
-Ensure you have the following installed:
-
-- Python 3.7+
-
-
-### Installation
-
-1. **Clone the repository**:
+### **Quick Start**
+1. Clone the repository:
    ```bash
    git clone https://github.com/CorneliusNgure/QuizWiz.git
    cd quizwiz
    ```
+2. Create a virtual environment and activate it:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # Linux/macOS
+   venv\Scripts\activate     # Windows
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Configure the `.env` file (see below) and set up the database.
 
-**Create a virtual environment:**
+---
+
+### **Environment Variables**
+Create a `.env` file in the root directory and add the following:
+
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-```
+# Database configuration
+DB_NAME_DEV=`your_development_db_name`
+DB_NAME_TEST=`your_testing_db_name`  # optional
+DB_NAME_PROD=`your_production_db_name`  # optional
 
-On windows use:
-```bash
-venv\Scripts\activate
+DB_USERNAME=`your_mysql_username`
+DB_PASSWORD=`your_mysql_password`
+DB_HOST=localhost
+DB_PORT=3306
 
-```
-
-**Install Dependencies**
-pip install -r requirements.txt
-
-**Set up environment variables**
-```bash
-FLASK_APP=app.py
+# Flask configuration
 FLASK_ENV=development
-flask run
+SECRET_KEY=`your_secret_key`
 ```
 
-### Usage
-- Access the Homepage: Navigate to http://127.0.0.1:5000/home
-- Select categories and take a quiz. Start a new quiz and answer questions as they appear.
-- Submit Answers: Submit your answers to see your score.
+- Replace placeholders with actual values and ensure `.env` is excluded from version control (`.gitignore`).
 
-**Future Enhancements**
-- User Authentication: Add login/logout functionality and user authentication.
-- Leaderboards: Implement a leaderboard to display top quiz scorers.
-- Question Cache: Cache questions locally to reduce API call frequency.
-- Front-end Integration: Integrate a React or Vue.js frontend for a better user experience.
+---
 
-### Contributing
-Contributions are welcome! Feel free to submit issues and pull requests to improve the app.
+### **Installation**
 
-### License
+1. Ensure your MySQL server is running and create a database:
+   ```sql
+   CREATE DATABASE quizwiz;
+   ```
+
+2. Initialize and migrate the database:
+   ```bash
+   flask db init
+   flask db migrate -m "Initial migration"
+   flask db upgrade
+   ```
+
+---
+
+### **Usage**
+Start the app:
+- **Linux/macOS**:
+   ```bash
+   flask run
+   ```
+- **Windows**:
+   ```bash
+   python -m flask run
+   ```
+
+Access the app at [http://127.0.0.1:5000/home](http://127.0.0.1:5000/home).
+
+---
+
+### **Future Enhancements**
+- **Leaderboards:** Display top quiz scorers.
+- **Question Cache:** Cache questions locally to reduce API call frequency.
+- **Frontend Framework:** Integrate React or Vue.js for a modern user experience.
+
+---
+
+### **Contributing**
+Contributions are welcome! Submit issues or pull requests to help improve QuizWiz.
+
+---
+
+### **License**
 This project is licensed under the MIT License.
 
-### Contact
-For questions or suggestions, reach out to kingcornelius07@gmail.com.
+---
+
+### **Contact**
+For questions or suggestions, reach out via:
+- **Email:** kingcornelius07@gmail.com
