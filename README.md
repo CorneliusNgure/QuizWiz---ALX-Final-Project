@@ -70,18 +70,12 @@ SECRET_KEY=`your_secret_key`
 
 ### **Installation**
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/CorneliusNgure/QuizWiz.git
-   cd quizwiz
-   ```
-
-2. Ensure your MySQL server is running and create a database:
+1.  Ensure your MySQL server is running and create a database:
    ```sql
    CREATE DATABASE quizwiz;
    ```
 
-3. Initialize and migrate the database:
+2. Initialize and migrate the database:
    ```bash
    flask db init
    flask db migrate -m "Initial migration"
