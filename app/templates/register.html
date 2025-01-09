@@ -120,6 +120,9 @@
     </style>
   </head>
   <body>
+    <!-- Flash Messages -->
+  {% include '_flash_messages.html' %}
+
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
       <a class="navbar-brand font-weight-bold" href="{{ url_for('main.home') }}">QuizWiz</a>
