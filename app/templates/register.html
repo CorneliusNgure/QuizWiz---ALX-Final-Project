@@ -23,7 +23,6 @@
       }
 
       /* Navbar Styling */
-      
       .navbar {
         background: rgba(255, 255, 255, 0.8);
       }
@@ -124,11 +123,6 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
       <a class="navbar-brand font-weight-bold" href="{{ url_for('main.home') }}">QuizWiz</a>
-      <!-- <div class="social-icons">
-        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
-        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a> -->
-      </div>
     </nav>
 
     <!-- Hero Section -->
@@ -146,7 +140,7 @@
       <p class="text-center">
         Already have an account? <a href="{{ url_for('main.sign_in') }}">Sign in here</a>.
       </p>
-      <form>
+      <form id="signupForm">
         <div class="form-group">
           <input
             type="text"
@@ -166,10 +160,23 @@
         <div class="form-group">
           <input
             type="password"
+            id="password"
             class="form-control"
             placeholder="Create Password"
             required
           />
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            id="confirmPassword"
+            class="form-control"
+            placeholder="Confirm Password"
+            required
+          />
+        </div>
+        <div class="alert alert-danger d-none" id="errorMsg">
+          Passwords do not match!
         </div>
         <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
       </form>
@@ -191,12 +198,20 @@
       </div>
     </footer>
 
-    <!-- JavaScript for Menu Toggle -->
+    <!-- JavaScript for Validation -->
     <script>
-      function toggleMenu() {
-        const nav = document.querySelector(".navbar-nav");
-        nav.style.display = nav.style.display === "block" ? "none" : "block";
-      }
+      document.getElementById("signupForm").addEventListener("submit", function (e) {
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+        const errorMsg = document.getElementById("errorMsg");
+
+        if (password !== confirmPassword) {
+          e.preventDefault();
+          errorMsg.classList.remove("d-none");
+        } else {
+          errorMsg.classList.add("d-none");
+        }
+      });
     </script>
 
     <!-- Bootstrap and jQuery -->
