@@ -128,29 +128,8 @@
       </div>
     </footer>
 
-    <!-- JavaScript for Navbar Toggle -->
-    <script>
-      function toggleMenu() {
-        const nav = document.querySelector(".navbar-nav");
-        nav.style.display = nav.style.display === "block" ? "none" : "block";
-      }
-
-      function startQuiz() {
-        const category = document.getElementById("category").value;
-        const difficulty = document.getElementById("difficulty").value;
-        const type = document.getElementById("type").value;
-
-        if (!category || !difficulty || !type) {
-          alert("Please select a category, difficulty, and type.");
-          return;
-        }
-
-        alert(
-          `Starting quiz in ${category} category with ${difficulty} difficulty and ${type} type!`
-        );
-      }
-    </script>
-
+    <script src="{{ url_for('static', filename='js/pick-category.js') }}"></script>
+    
     <!-- Bootstrap and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>

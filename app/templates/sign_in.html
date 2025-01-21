@@ -78,23 +78,7 @@
       </div>
     </footer>
 
-  <script>
-    // Toggle navigation menu
-    function toggleMenu() {
-      const nav = document.querySelector('.navbar-nav');
-      nav.style.display = nav.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // Auto-dismiss flash messages
-    // document.addEventListener('DOMContentLoaded', () => {
-    //   const flashMessages = document.querySelectorAll('.flash-message');
-    //   flashMessages.forEach((message) => {
-    //     setTimeout(() => {
-    //       message.style.display = 'none';
-    //     }, 5000);
-    //   });
-    // });
-  </script>
+  <script src="{{ url_for('static', filename='js/sign_in.js') }}"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -122,12 +122,8 @@
     </footer>
 
     <!-- JavaScript for Navbar Toggle -->
-    <script>
-      function toggleMenu() {
-        const nav = document.querySelector(".navbar-nav");
-        nav.style.display = nav.style.display === "block" ? "none" : "block";
-      }
-    </script>
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script> 
+    
 
     <!-- Bootstrap and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
