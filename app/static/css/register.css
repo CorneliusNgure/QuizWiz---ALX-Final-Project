@@ -1,0 +1,103 @@
+body,
+html {
+  font-family: "Comic Sans MS", sans-serif;
+  background: linear-gradient(to right, skyblue, purple);
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* Navbar Styling */
+.navbar {
+  background: rgba(255, 255, 255, 0.8);
+}
+.navbar-nav .nav-link {
+  color: #4b0082;
+  font-weight: bold;
+}
+.dropdown-menu {
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  left: 0;
+}
+.dropdown-item {
+  color: #333;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #fff;
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Section */
+.register-form {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+.form-control,
+.btn-primary {
+  border-radius: 30px;
+}
+
+/* Button Styling */
+.btn-primary {
+  background: #ff69b4;
+  border: none;
+  font-weight: bold;
+}
+.btn-primary:hover {
+  background: #ff1493;
+}
+
+/* Footer Styling */
+.footer {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1rem;
+  text-align: center;
+}
+.footer .social-icons a {
+  color: #4b0082;
+  margin: 0 15px;
+  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.footer .social-icons a span {
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+/* Responsive Dropdown Menu */
+.hamburger-menu {
+  display: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+/* Media Queries */
+@media (max-width: 767px) {
+  .navbar-nav {
+    display: none;
+  }
+  .hamburger-menu {
+    display: block;
+  }
+}
