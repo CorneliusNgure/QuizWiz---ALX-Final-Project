@@ -72,7 +72,7 @@ def fetch_questions():
 
     base_url = "https://opentdb.com/api.php"
     params = {
-        "amount": 5, 
+        "amount": 10, 
         "category": category,
         "difficulty": difficulty,
         "type": question_type
@@ -97,6 +97,7 @@ def submit_quiz():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # a new quiz session to store quiz data
     quiz_session = QuizSession(user_id=user_id)
     db.session.add(quiz_session)
     db.session.commit()
@@ -107,6 +108,7 @@ def submit_quiz():
         if is_correct:
             score += 1
 
+        # Store each question attempt
         attempt = QuestionAttempt(
             quiz_session_id=quiz_session.id,
             question_text=answer['question_text'],

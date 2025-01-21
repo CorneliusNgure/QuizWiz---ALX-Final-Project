@@ -18,10 +18,12 @@ let questionNumb = 1;
 let questions = [];
 let userScore = 0;
 
+
 startBtn.onclick = () => {
   popupInfo.classList.add('active');
   main.classList.add('active');
 };
+
 
 exitBtn.onclick = () => {
   popupInfo.classList.remove('active');
@@ -34,16 +36,19 @@ continueBtn.onclick = async () => {
   main.classList.remove('active');
   quizBox.classList.add('active');
 
+  
   try {
     const category = document.getElementById("category").value;
     const difficulty = document.getElementById("difficulty").value;
     const type = document.getElementById("type").value;
 
+    
     if (!category || !difficulty || !type) {
       alert("Please select a category, difficulty, and type.");
       return;
     }
 
+    // backend
     const response = await fetch(`/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`);
     const data = await response.json();
 
@@ -101,6 +106,7 @@ nextBtn.onclick = () => {
   }
 };
 
+
 function showQuestions(index) {
   const currentQuestion = questions[index];
 
@@ -123,6 +129,7 @@ function showQuestions(index) {
   });
 }
 
+
 // Shuffle an array (Fisher-Yates shuffle)
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -132,12 +139,14 @@ function shuffleArray(array) {
   return array;
 }
 
+
 // Decode HTML entities
 function decodeHTML(html) {
   const textArea = document.createElement('textarea');
   textArea.innerHTML = html;
   return textArea.value;
 }
+
 
 function selectOption(optionElement, correctAnswer) {
     if (optionElement.textContent.includes(decodeHTML(correctAnswer))) {
@@ -166,7 +175,6 @@ function selectOption(optionElement, correctAnswer) {
     nextBtn.disabled = false;
   }
   
-
 // Updating the question counter
 function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
