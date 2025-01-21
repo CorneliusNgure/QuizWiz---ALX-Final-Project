@@ -115,35 +115,26 @@ function decodeHTML(html) {
 }
 
 function selectOption(optionElement, correctAnswer) {
-  const questionIndex = questionCount;
-  const selectedAnswer = optionElement.textContent.trim();
-
-  // Store the selected answer in the corresponding question object
-  questions[questionIndex].user_answer = selectedAnswer;
-
-  if (selectedAnswer.includes(decodeHTML(correctAnswer))) {
-      optionElement.classList.add('correct');
+  if (optionElement.textContent.includes(decodeHTML(correctAnswer))) {
+    optionElement.classList.add('correct');
   } else {
-      optionElement.classList.add('incorrect');
-      document.querySelectorAll('.option').forEach(option => {
-          if (option.textContent.includes(decodeHTML(correctAnswer))) {
-              option.classList.add('correct');
-          }
-      });
+    optionElement.classList.add('incorrect');
+    document.querySelectorAll('.option').forEach(option => {
+      if (option.textContent.includes(decodeHTML(correctAnswer))) {
+        option.classList.add('correct');
+      }
+    });
   }
 
   nextBtn.classList.add('active');
   document.querySelectorAll('.option').forEach(option => option.classList.add('disabled'));
 }
 
-
 function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
 }
 
 function showResultBox() {
-  console.log('Questions before submission:', questions);
-
   quizBox.classList.remove('active');
   resultBox.classList.add('active');
 

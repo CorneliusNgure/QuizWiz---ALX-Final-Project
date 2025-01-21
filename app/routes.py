@@ -18,7 +18,7 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
 
-        if User.query.filter_by(email=email).first() or User.query.filter_by(username=username).first():
+        if User.query.filter((User.email == email) | (User.username == username)).first():
             flash("Username or Email already exists", "danger")
             return redirect(url_for("main.register"))
 
@@ -70,55 +70,73 @@ def fetch_questions():
     difficulty = request.args.get("difficulty")
     question_type = request.args.get("type")
 
+    if not category or not difficulty or not question_type:
+        return jsonify({"message": "Missing query parameters"}), 400
+
     base_url = "https://opentdb.com/api.php"
     params = {
-        "amount": 10, 
+        "amount": 10,
         "category": category,
         "difficulty": difficulty,
         "type": question_type
     }
 
-    response = requests.get(base_url, params=params)
-    if response.status_code == 200:
-        return jsonify(response.json())
-    else:
-        return jsonify({"error": "Failed to fetch questions"}), 500
+    try:
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        if not data.get("results"):
+            return jsonify({"message": "No questions found"}), 404
+
+        # Ensure the response matches client expectations
+        return jsonify({"results": data["results"]})
+    except requests.RequestException as e:
+        return jsonify({"message": f"Failed to fetch questions: {str(e)}"}), 500
+
 
 @main_bp.route("/submit_quiz", methods=["POST"])
 def submit_quiz():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized access"}), 401
 
-    data = request.json
+    data = request.get_json()
+    print("Received data:", data)  # Debug incoming payload
+
+    if not data or "answers" not in data:
+        print("Invalid input received.")
+        return jsonify({"error": "Invalid input"}), 400
+
     user_id = session["user_id"]
-    answers = data.get('answers')  # List of answers with question text, user's answer, and correct answer
+    answers = data["answers"]
+    print("Answers received:", answers)  # Debug answers array
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # a new quiz session to store quiz data
     quiz_session = QuizSession(user_id=user_id)
     db.session.add(quiz_session)
     db.session.commit()
 
     score = 0
     for answer in answers:
-        is_correct = answer['user_answer'] == answer['correct_answer']
+        print("Processing answer:", answer)  # Debug each answer
+        is_correct = answer.get('user_answer') == answer.get('correct_answer')
         if is_correct:
             score += 1
 
-        # Store each question attempt
         attempt = QuestionAttempt(
             quiz_session_id=quiz_session.id,
-            question_text=answer['question_text'],
-            user_answer=answer['user_answer'],
-            correct_answer=answer['correct_answer'],
+            question_text=answer.get('question_text', 'N/A'),
+            user_answer=answer.get('user_answer', 'N/A'),
+            correct_answer=answer.get('correct_answer', 'N/A'),
             is_correct=is_correct
         )
         db.session.add(attempt)
 
     quiz_session.score = score
     db.session.commit()
+    print("Final score:", score)  # Debug final score
 
     return jsonify({"message": "Quiz results saved successfully", "score": score})
