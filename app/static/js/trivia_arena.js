@@ -190,7 +190,7 @@ function showResultBox() {
   quizBox.classList.remove('active');
   resultBox.classList.add('active');
 //   quizSection.classList.remove('active');
-
+ 
 const scoreText = document.querySelector('.score-text');
 scoreText.textContent = `Your score is ${userScore} / ${questions.length}`;
 
@@ -209,5 +209,36 @@ let progress = setInterval(() => {
     if (progresStartValue == progressEndValue) {
         clearInterval(progress);
     }
-}, speed);
+  }, speed);
+}
+
+async function submitQuiz() {
+  try {
+    const answers = questions.map((question, index) => {
+      const userAnswer = document.querySelectorAll('.option')[index].textContent;
+      return {
+        question_text: question.question,
+        user_answer: userAnswer,
+        correct_answer: question.correct_answer,
+      };
+    });
+
+    const response = await fetch('/submit_quiz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ answers }),
+    });
+
+    const data = await response.json();
+    if (data.score) {
+      alert(`Your score is ${data.score}`);
+    } else {
+      alert("Error submitting quiz.");
+    }
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    alert("An error occurred while submitting your quiz.");
+  }
 }
