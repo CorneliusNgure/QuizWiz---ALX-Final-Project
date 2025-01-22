@@ -122,7 +122,14 @@ def submit_quiz():
     score = 0
     for answer in answers:
         print("Processing answer:", answer)  # Debug each answer
-        is_correct = answer.get('user_answer') == answer.get('correct_answer')
+
+        # Normalize and strip user_answer
+        user_answer = answer.get('user_answer', 'N/A').split(". ", 1)[-1].strip().lower()
+        correct_answer = answer.get('correct_answer', 'N/A').strip().lower()
+
+        print(f"Comparing: user_answer='{user_answer}' vs correct_answer='{correct_answer}'")
+
+        is_correct = user_answer == correct_answer
         if is_correct:
             score += 1
 
