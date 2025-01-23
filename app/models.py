@@ -55,26 +55,43 @@ class QuestionAttempt(db.Model):
         return f"<QuestionAttempt {self.id} - Correct: {self.is_correct}>"
     
 
-class QuizCategory(db.Model):
+class QuestionCategory(db.Model):
+    """
+    Represents categories of questions (e.g., "Science").
+    """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(255), unique=True, nullable=False) 
 
     def __repr__(self):
-        return f"<QuizCategory {self.name}>"
+        return f"<QuestionCategory {self.name}>"
 
 
-class QuizDifficulty(db.Model):
+class QuestionDifficulty(db.Model):
+    """
+    Represents difficulty levels for the questions.
+    """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    level = db.Column(
+        db.Enum('easy', 'medium', 'hard', name='difficulty_levels'),
+        unique=True,
+        nullable=False
+    ) 
 
     def __repr__(self):
-        return f"<QuizDifficulty {self.name}>"
+        return f"<QuestionDifficulty {self.level}>"
 
 
-class QuizType(db.Model):
+class QuestionType(db.Model):
+    """
+    Represents types of questions (e.g., "multiple choice", "true/false").
+    """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    type = db.Column(
+        db.Enum('multiple choice', 'true/false', name='question_types'),
+        unique=True,
+        nullable=False
+    ) 
 
     def __repr__(self):
-        return f"<QuizType {self.name}>"
+        return f"<QuestionType {self.type}>"
 
