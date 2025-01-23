@@ -25,16 +25,19 @@ class User(db.Model):
 
 class QuizSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='SET NULL'), nullable=True)
-    difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='SET NULL'), nullable=True)
-    type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='SET NULL'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='SET NULL'), nullable=True, index=True)
+    difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='SET NULL'), nullable=True, index=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='SET NULL'), nullable=True, index=True)
     score = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     category = db.relationship('QuestionCategory', backref='quiz_sessions', lazy=True)
     difficulty = db.relationship('QuestionDifficulty', backref='quiz_sessions', lazy=True)
     question_type = db.relationship('QuestionType', backref='quiz_sessions', lazy=True)
+    attempts = db.relationship('QuestionAttempt', backref='quiz_session', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return (
@@ -47,22 +50,22 @@ class QuizSession(db.Model):
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.Text, nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='CASCADE'), nullable=False)
-    difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='CASCADE'), nullable=False)
-    type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='CASCADE'), nullable=False, index=True)
+    difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='CASCADE'), nullable=False, index=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='CASCADE'), nullable=False, index=True)
     correct_answer = db.Column(db.Text, nullable=False)
     attempts = db.relationship('QuestionAttempt', backref='question', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Question {self.id}: {self.question_text[:50]}...>"
-    
+
 
 class QuestionCategory(db.Model):
     """
     Represents categories of questions (e.g., "Science").
     """
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), unique=True, nullable=False) 
+    name = db.Column(db.String(255), unique=True, nullable=False)
 
     def __repr__(self):
         return f"<QuestionCategory {self.name}>"
@@ -77,7 +80,7 @@ class QuestionDifficulty(db.Model):
         db.Enum('easy', 'medium', 'hard', name='question_difficulty_levels'),
         unique=True,
         nullable=False
-    ) 
+    )
 
     def __repr__(self):
         return f"<QuestionDifficulty {self.level}>"
@@ -92,7 +95,7 @@ class QuestionType(db.Model):
         db.Enum('multiple choice', 'true/false', name='question_types'),
         unique=True,
         nullable=False
-    ) 
+    )
 
     def __repr__(self):
         return f"<QuestionType {self.type}>"
@@ -100,8 +103,8 @@ class QuestionType(db.Model):
 
 class QuestionAttempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    quiz_session_id = db.Column(db.Integer, db.ForeignKey('quiz_session.id', ondelete='CASCADE'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'), nullable=False)
+    quiz_session_id = db.Column(db.Integer, db.ForeignKey('quiz_session.id', ondelete='CASCADE'), nullable=False, index=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'), nullable=False, index=True)
     is_correct = db.Column(db.Boolean, nullable=False)
     user_answer = db.Column(db.Text, nullable=True)
     points_awarded = db.Column(db.Integer, default=0)
