@@ -105,10 +105,34 @@ class QuestionAttempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_session_id = db.Column(db.Integer, db.ForeignKey('quiz_session.id', ondelete='CASCADE'), nullable=False, index=True)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'), nullable=False, index=True)
-    is_correct = db.Column(db.Boolean, nullable=False)
     user_answer = db.Column(db.Text, nullable=True)
+    is_correct = db.Column(db.Boolean, nullable=False)
     points_awarded = db.Column(db.Integer, default=0)
     date_attempted = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f"<QuestionAttempt {self.id}, Correct: {self.is_correct}>"
+
+
+class Scoring(db.Model):
+    """
+    Represents the scoring system for questions based on difficulty, type, and category.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='CASCADE'), nullable=False)
+    type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='CASCADE'), nullable=True)  # Nullable in case scoring isn't category-specific
+    points = db.Column(db.Integer, nullable=False)
+
+    # Relationships
+    difficulty = db.relationship('QuestionDifficulty', backref='scoring_rules', lazy=True)
+    question_type = db.relationship('QuestionType', backref='scoring_rules', lazy=True)
+    category = db.relationship('QuestionCategory', backref='scoring_rules', lazy=True)
+
+    def __repr__(self):
+        return (
+            f"<Scoring Difficulty={self.difficulty.level}, "
+            f"Type={self.question_type.type}, "
+            f"Category={self.category.name if self.category else 'None'}, "
+            f"Points={self.points}>"
+        )
