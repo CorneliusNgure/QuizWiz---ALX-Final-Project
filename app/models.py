@@ -24,12 +24,24 @@ class User(db.Model):
 class QuizSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date_started = db.Column(db.DateTime, default=datetime.utcnow)
+    category_id = db.Column(db.Integer, db.ForeignKey('quiz_category.id'), nullable=True)
+    difficulty_id = db.Column(db.Integer, db.ForeignKey('quiz_difficulty.id'), nullable=True)
+    type_id = db.Column(db.Integer, db.ForeignKey('quiz_type.id'), nullable=True)
     score = db.Column(db.Integer, nullable=True)
-    questions_attempted = db.relationship('QuestionAttempt', backref='quiz_session', lazy=True)
+
+    # Relationships
+    category = db.relationship('QuizCategory', backref='quiz_sessions', lazy=True)
+    difficulty = db.relationship('QuizDifficulty', backref='quiz_sessions', lazy=True)
+    type = db.relationship('QuizType', backref='quiz_sessions', lazy=True)
 
     def __repr__(self):
-        return f"<QuizSession {self.id} for User {self.user_id}>"
+        return (
+            f"<QuizSession id={self.id}, user_id={self.user_id}, "
+            f"category_id={self.category_id}, difficulty_id={self.difficulty_id}, "
+            f"type_id={self.type_id}, score={self.score}>"
+        )
+
+
 
 class QuestionAttempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,3 +53,28 @@ class QuestionAttempt(db.Model):
 
     def __repr__(self):
         return f"<QuestionAttempt {self.id} - Correct: {self.is_correct}>"
+    
+
+class QuizCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<QuizCategory {self.name}>"
+
+
+class QuizDifficulty(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<QuizDifficulty {self.name}>"
+
+
+class QuizType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<QuizType {self.name}>"
+
