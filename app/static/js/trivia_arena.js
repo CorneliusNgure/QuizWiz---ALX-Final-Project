@@ -44,9 +44,15 @@ continueBtn.onclick = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      questions = data.results; // Adjusted to match Open Trivia DB's key
-      showQuestions(0);
-      questionCounter(questionNumb);
+      questions = data.results.map((q, index) => ({
+        ...q,
+        question_id: q.id || index + 1, // Use `id` from the API if available, or fallback to an index-based ID
+      }));
+
+      console.log("Fetched questions:", questions);  // debugging the fetched questions
+
+      showQuestions(0); /// display the 1st questin
+      questionCounter(questionNumb); // initialize the question counter
     } else {
       const error = await response.json();
       alert(error.message);
@@ -122,18 +128,18 @@ function selectOption(optionElement, correctAnswer) {
   questions[questionIndex].user_answer = selectedAnswer;
 
   if (selectedAnswer.includes(decodeHTML(correctAnswer))) {
-      optionElement.classList.add('correct');
+    optionElement.classList.add("correct");
   } else {
-      optionElement.classList.add('incorrect');
-      document.querySelectorAll('.option').forEach(option => {
-          if (option.textContent.includes(decodeHTML(correctAnswer))) {
-              option.classList.add('correct');
-          }
-      });
+    optionElement.classList.add("incorrect");
+    document.querySelectorAll(".option").forEach((option) => {
+      if (option.textContent.includes(decodeHTML(correctAnswer))) {
+        option.classList.add("correct");
+      }
+    });
   }
 
-  nextBtn.classList.add('active');
-  document.querySelectorAll('.option').forEach(option => option.classList.add('disabled'));
+  nextBtn.classList.add("active");
+  document.querySelectorAll(".option").forEach((option) => option.classList.add("disabled"));
 }
 
 
@@ -142,33 +148,34 @@ function questionCounter(index) {
 }
 
 function showResultBox() {
-  console.log('Questions before submission:', questions);
+  console.log("Questions before submission:", questions);
 
-  quizBox.classList.remove('active');
-  resultBox.classList.add('active');
+  quizBox.classList.remove("active");
+  resultBox.classList.add("active");
 
-  const answers = questions.map(q => ({
+  const answers = questions.map((q) => ({
+    question_id: q.question_id, // Include the question ID
     question_text: q.question, // Use `question` from the received data
     user_answer: q.user_answer || "", // Ensure `user_answer` is set during the quiz
     correct_answer: q.correct_answer,
   }));
 
-  console.log('Answers to submit:', answers); // Debug the final payload
+  console.log("Answers to submit:", answers); // Debug the final payload
 
-  fetch('/submit_quiz', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  fetch("/submit_quiz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ answers }),
   })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Parsed data:', data); // Debug server response
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Parsed data:", data); // Debug server response
       if (data.error) {
         alert(data.error);
         return;
       }
-      const scoreText = document.querySelector('.score-text');
-      scoreText.textContent = `Your score is ${data.score} / ${questions.length}`;
+      const scoreText = document.querySelector(".score-text");
+      scoreText.textContent = `Your score is ${data.total_score} / ${questions.length}`; // Corrected key for total score
     })
-    .catch(error => console.error('Error submitting quiz:', error));
+    .catch((error) => console.error("Error submitting quiz:", error));
 }

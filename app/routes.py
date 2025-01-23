@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from .models import User, QuizSession, QuestionAttempt
+from .models import User, QuizSession, QuestionAttempt, Question, Scoring
 import requests
 
 # Define a blueprint
@@ -75,7 +75,7 @@ def fetch_questions():
 
     base_url = "https://opentdb.com/api.php"
     params = {
-        "amount": 10,
+        "amount": 3,
         "category": category,
         "difficulty": difficulty,
         "type": question_type
@@ -102,48 +102,67 @@ def submit_quiz():
 
     data = request.get_json()
     print("Received data:", data)  # Debug incoming payload
-
+    
     if not data or "answers" not in data:
         print("Invalid input received.")
         return jsonify({"error": "Invalid input"}), 400
 
     user_id = session["user_id"]
     answers = data["answers"]
-    print("Answers received:", answers)  # Debug answers array
+    print("Answers received:", answers)
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Create a new quiz session
     quiz_session = QuizSession(user_id=user_id)
     db.session.add(quiz_session)
     db.session.commit()
 
-    score = 0
+    total_score = 0
+
     for answer in answers:
-        print("Processing answer:", answer)  # Debug each answer
+        question_id = answer.get("question_id")
+        if not question_id:
+            print("Missing question_id in answer:", answer)
+            continue  # Skip or handle this as needed
 
-        # Normalize and strip user_answer
-        user_answer = answer.get('user_answer', 'N/A').split(". ", 1)[-1].strip().lower()
-        correct_answer = answer.get('correct_answer', 'N/A').strip().lower()
+        user_answer = answer.get("user_answer")
 
-        print(f"Comparing: user_answer='{user_answer}' vs correct_answer='{correct_answer}'")
+        question = Question.query.get(question_id)
+        if not question:
+            print(f"Question with ID {question_id} not found.")
+            continue
 
-        is_correct = user_answer == correct_answer
-        if is_correct:
-            score += 1
+        # Check if the answer is correct
+        is_correct = (user_answer.strip().lower() == question.correct_answer.strip().lower())
 
-        attempt = QuestionAttempt(
+        # Fetch points for this question
+        scoring_rule = Scoring.query.filter_by(
+            category_id=question.category_id,
+            difficulty_id=question.difficulty_id,
+            type_id=question.type_id
+        ).first()
+
+        points_awarded = scoring_rule.points if scoring_rule and is_correct else 0
+        total_score += points_awarded
+
+        # Save the question attempt
+        question_attempt = QuestionAttempt(
             quiz_session_id=quiz_session.id,
-            question_text=answer.get('question_text', 'N/A'),
-            user_answer=answer.get('user_answer', 'N/A'),
-            correct_answer=answer.get('correct_answer', 'N/A'),
-            is_correct=is_correct
+            question_id=question.id,
+            user_answer=user_answer,
+            is_correct=is_correct,
+            points_awarded=points_awarded
         )
-        db.session.add(attempt)
+        db.session.add(question_attempt)
 
-    quiz_session.score = score
+    # Update the quiz session's score
+    quiz_session.score = total_score
     db.session.commit()
-    print("Final score:", score)  # Debug final score
 
-    return jsonify({"message": "Quiz results saved successfully", "score": score})
+    return jsonify({
+        "message": "Quiz submitted successfully!",
+        "total_score": total_score
+    })
