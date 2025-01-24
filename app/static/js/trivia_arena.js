@@ -49,7 +49,7 @@ continueBtn.onclick = async () => {
         question_id: q.id || index + 1, // Use `id` from the API if available, or fallback to an index-based ID
       }));
 
-      console.log("Fetched questions:", questions);  // debugging the fetched questions
+      console.log("Fetched questions with IDs:", questions);  // debugging the fetched questions
 
       showQuestions(0); /// display the 1st questin
       questionCounter(questionNumb); // initialize the question counter

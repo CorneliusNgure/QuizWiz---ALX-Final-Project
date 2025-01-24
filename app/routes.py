@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from .models import User, QuizSession, QuestionAttempt, Question, Scoring
+from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
 import requests
+import json
 
 # Define a blueprint
 main_bp = Blueprint("main", __name__)
@@ -64,6 +65,9 @@ def trivia_arena():
         return redirect(url_for("main.sign_in"))
     return render_template("trivia_arena.html")
 
+
+import logging
+
 @main_bp.route("/fetch_questions", methods=["GET"])
 def fetch_questions():
     category = request.args.get("category")
@@ -73,10 +77,28 @@ def fetch_questions():
     if not category or not difficulty or not question_type:
         return jsonify({"message": "Missing query parameters"}), 400
 
+    # Map category, difficulty, and type names to their IDs
+    category_obj = QuestionCategory.query.filter_by(name=category).first()
+    difficulty_obj = QuestionDifficulty.query.filter_by(level=difficulty).first()
+    type_obj = QuestionType.query.filter_by(type=question_type).first()
+
+    # Validate that all mappings exist
+    if not category_obj:
+        return jsonify({"message": f"Category '{category}' not found"}), 404
+    if not difficulty_obj:
+        return jsonify({"message": f"Difficulty '{difficulty}' not found"}), 404
+    if not type_obj:
+        return jsonify({"message": f"Type '{question_type}' not found"}), 404
+
+    category_id = category_obj.id
+    difficulty_id = difficulty_obj.id
+    type_id = type_obj.id
+
+    # Fetch questions from the API
     base_url = "https://opentdb.com/api.php"
     params = {
         "amount": 3,
-        "category": category,
+        "category": category_id,
         "difficulty": difficulty,
         "type": question_type
     }
@@ -86,12 +108,42 @@ def fetch_questions():
         response.raise_for_status()
         data = response.json()
 
+        # Debug: Log the response data from the API
+        logging.info("Fetched data from OpenTDB API: %s", data)
+
         if not data.get("results"):
             return jsonify({"message": "No questions found"}), 404
 
-        # Ensure the response matches client expectations
-        return jsonify({"results": data["results"]})
+        saved_questions = []
+
+        for item in data["results"]:
+            # Check if the question already exists in the database
+            question = Question.query.filter_by(question_text=item["question"]).first()
+
+            if not question:
+                question = Question(
+                    question_text=item["question"],
+                    correct_answer=item["correct_answer"],
+                    category_id=category_id,
+                    difficulty_id=difficulty_id,
+                    type_id=type_id,
+                )
+                db.session.add(question)
+                db.session.commit()
+            
+            saved_questions.append({
+                "id": question.id,
+                "question": question.question_text,
+                "correct_answer": question.correct_answer,
+            })
+
+        # Debug: Log the saved questions
+        logging.info("Saved questions: %s", saved_questions)
+
+        return jsonify({"results": saved_questions})
+
     except requests.RequestException as e:
+        logging.error("Failed to fetch questions from API: %s", str(e))
         return jsonify({"message": f"Failed to fetch questions: {str(e)}"}), 500
 
 
@@ -132,7 +184,7 @@ def submit_quiz():
 
         question = Question.query.get(question_id)
         if not question:
-            print(f"Question with ID {question_id} not found.")
+            print(f"Question with ID {question_id} not found in the database.")
             continue
 
         # Check if the answer is correct
