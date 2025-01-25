@@ -5,6 +5,7 @@ from .models import User, QuizSession, QuestionAttempt, Question, Scoring, Quest
 import requests
 import json
 import logging
+import html
 
 # Define a blueprint
 main_bp = Blueprint("main", __name__)
@@ -67,6 +68,23 @@ def trivia_arena():
     return render_template("trivia_arena.html")
 
 
+def process_api_response(api_response):
+    """
+    Processes the API response to decode HTML entities in the question text.
+    """
+    decoded_results = []
+    for question_data in api_response['results']:
+        # Decode HTML entities in the question text
+        question_data['question'] = html.unescape(question_data['question'])
+
+        # Decode incorrect answers if needed
+        question_data['incorrect_answers'] = [
+            html.unescape(answer) for answer in question_data['incorrect_answers']
+        ]
+        decoded_results.append(question_data)
+    return decoded_results
+
+
 @main_bp.route("/fetch_questions", methods=["GET"])
 def fetch_questions():
     # Fetch query parameters from the request
@@ -104,6 +122,10 @@ def fetch_questions():
         new_questions = []
 
         for item in data["results"]:
+            # Decode HTML entities in the question text and incorrect answers
+            question_text = html.unescape(item["question"])
+            incorrect_answers = [html.unescape(answer) for answer in item["incorrect_answers"]]
+            
             # Check if the question already exists in the database
             existing_question = Question.query.filter_by(question_text=item["question"]).first()
 
@@ -114,8 +136,9 @@ def fetch_questions():
 
                 # Create a new Question object
                 new_question = Question(
-                    question_text=item["question"],
+                    question_text=question_text,
                     correct_answer=item["correct_answer"],
+                    incorrect_answers=incorrect_answers,
                     category_id=int(category),  # Store the category ID
                     difficulty_id=difficulty_id,  # Map difficulty levels
                     type_id=type_id,  # Map type IDs
@@ -139,14 +162,13 @@ def fetch_questions():
                 "id": question.id,
                 "question": question.question_text,
                 "correct_answer": question.correct_answer,
-                "incorrect_answers": [],  # Add a way to fetch incorrect answers if stored
+                "incorrect_answers": question.incorrect_answers,
             }
             for question in saved_questions
         ]
 
         return jsonify({"results": response_questions}), 200
-
-
+    
     except ValueError as e:
         print(f"ValueError: {str(e)}")
         return jsonify({"message": "Invalid input parameters"}), 400

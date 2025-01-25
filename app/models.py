@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from sqlalchemy.dialects.mysql import JSON
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +54,7 @@ class Question(db.Model):
     difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='CASCADE'), nullable=False, index=True)
     type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='CASCADE'), nullable=False, index=True)
     correct_answer = db.Column(db.Text, nullable=False)
+    incorrect_answers = db.Column(JSON, nullable=True) 
     attempts = db.relationship('QuestionAttempt', backref='question', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
