@@ -28,15 +28,21 @@ exitBtn.onclick = () => {
 };
 
 continueBtn.onclick = async () => {
-  quizSection.classList.add('active');
-  popupInfo.classList.remove('active');
-  main.classList.remove('active');
-  quizBox.classList.add('active');
+  quizSection.classList.add("active");
+  popupInfo.classList.remove("active");
+  main.classList.remove("active");
+  quizBox.classList.add("active");
 
   try {
-    const category = document.getElementById('category').value;
-    const difficulty = document.getElementById('difficulty').value;
-    const type = document.getElementById('type').value;
+    const category = document.getElementById("category").value.trim();
+    const difficulty = document.getElementById("difficulty").value.trim();
+    const type = document.getElementById("type").value.trim();
+
+    // Validate user input
+    if (!category || !difficulty || !type) {
+      alert("Please select all quiz options before proceeding.");
+      return;
+    }
 
     const response = await fetch(
       `/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`
@@ -44,24 +50,29 @@ continueBtn.onclick = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      questions = data.results.map((q, index) => ({
-        ...q,
-        question_id: q.id || index + 1, // Use `id` from the API if available, or fallback to an index-based ID
-      }));
+      if (data.results && data.results.length > 0) {
+        questions = data.results.map((q, index) => ({
+          ...q,
+          question_id: q.id || index + 1,
+        }));
 
-      console.log("Fetched questions with IDs:", questions);  // debugging the fetched questions
+        console.log("Fetched questions with IDs:", questions);
 
-      showQuestions(0); /// display the 1st questin
-      questionCounter(questionNumb); // initialize the question counter
+        showQuestions(0); // Display the first question
+        questionCounter(questionNumb); // Initialize the question counter
+      } else {
+        alert("No questions found for the selected options.");
+      }
     } else {
       const error = await response.json();
-      alert(error.message);
+      alert(error.message || "An unknown error occurred.");
     }
   } catch (error) {
-    console.error('Error fetching questions:', error);
-    alert('Failed to load questions. Please try again later.');
+    console.error("Error fetching questions:", error);
+    alert("Failed to load questions. Please try again later.");
   }
 };
+
 
 nextBtn.onclick = () => {
   if (questionCount < questions.length - 1) {
@@ -96,10 +107,10 @@ function showQuestions(index) {
   const allOptions = [...currentQuestion.incorrect_answers, currentQuestion.correct_answer];
   shuffleArray(allOptions);
 
-  allOptions.forEach((option, i) => {
+  allOptions.forEach((option) => {
     const optionDiv = document.createElement('div');
     optionDiv.classList.add('option');
-    optionDiv.innerHTML = `<span>${String.fromCharCode(65 + i)}. ${decodeHTML(option)}</span>`;
+    optionDiv.innerHTML = `<span>${decodeHTML(option)}</span>`;
     optionDiv.onclick = () => {
       selectOption(optionDiv, currentQuestion.correct_answer);
     };
@@ -127,55 +138,54 @@ function selectOption(optionElement, correctAnswer) {
   // Store the selected answer in the corresponding question object
   questions[questionIndex].user_answer = selectedAnswer;
 
-  if (selectedAnswer.includes(decodeHTML(correctAnswer))) {
-    optionElement.classList.add("correct");
+  if (selectedAnswer === decodeHTML(correctAnswer)) {
+    optionElement.classList.add('correct');
   } else {
-    optionElement.classList.add("incorrect");
-    document.querySelectorAll(".option").forEach((option) => {
-      if (option.textContent.includes(decodeHTML(correctAnswer))) {
-        option.classList.add("correct");
+    optionElement.classList.add('incorrect');
+    document.querySelectorAll('.option').forEach((option) => {
+      if (option.textContent === decodeHTML(correctAnswer)) {
+        option.classList.add('correct');
       }
     });
   }
 
-  nextBtn.classList.add("active");
-  document.querySelectorAll(".option").forEach((option) => option.classList.add("disabled"));
+  nextBtn.classList.add('active');
+  document.querySelectorAll('.option').forEach((option) => option.classList.add('disabled'));
 }
-
 
 function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
 }
 
 function showResultBox() {
-  console.log("Questions before submission:", questions);
+  console.log('Questions before submission:', questions);
 
-  quizBox.classList.remove("active");
-  resultBox.classList.add("active");
+  quizBox.classList.remove('active');
+  resultBox.classList.add('active');
 
   const answers = questions.map((q) => ({
-    question_id: q.question_id, // Include the question ID
-    question_text: q.question, // Use `question` from the received data
-    user_answer: q.user_answer || "", // Ensure `user_answer` is set during the quiz
+    question_id: q.question_id,
+    question_text: q.question,
+    user_answer: q.user_answer || '',
     correct_answer: q.correct_answer,
   }));
 
-  console.log("Answers to submit:", answers); // Debug the final payload
+  console.log('Answers to submit:', answers);
 
-  fetch("/submit_quiz", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  fetch('/submit_quiz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answers }),
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log("Parsed data:", data); // Debug server response
+      console.log('Parsed data:', data);
       if (data.error) {
         alert(data.error);
         return;
       }
-      const scoreText = document.querySelector(".score-text");
-      scoreText.textContent = `Your score is ${data.total_score} / ${questions.length}`; // Corrected key for total score
+      const scoreText = document.querySelector('.score-text');
+      scoreText.textContent = `Your score is ${data.total_score} / ${questions.length}`;
     })
-    .catch((error) => console.error("Error submitting quiz:", error));
+    .catch((error) => console.error('Error submitting quiz:', error));
 }

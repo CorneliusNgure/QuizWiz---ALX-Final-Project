@@ -4,6 +4,7 @@ from app import db
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
 import requests
 import json
+import logging
 
 # Define a blueprint
 main_bp = Blueprint("main", __name__)
@@ -66,85 +67,87 @@ def trivia_arena():
     return render_template("trivia_arena.html")
 
 
-import logging
-
 @main_bp.route("/fetch_questions", methods=["GET"])
 def fetch_questions():
+    # Fetch query parameters from the request
     category = request.args.get("category")
     difficulty = request.args.get("difficulty")
     question_type = request.args.get("type")
 
+    # Validate the inputs
     if not category or not difficulty or not question_type:
         return jsonify({"message": "Missing query parameters"}), 400
 
-    # Map category, difficulty, and type names to their IDs
-    category_obj = QuestionCategory.query.filter_by(name=category).first()
-    difficulty_obj = QuestionDifficulty.query.filter_by(level=difficulty).first()
-    type_obj = QuestionType.query.filter_by(type=question_type).first()
-
-    # Validate that all mappings exist
-    if not category_obj:
-        return jsonify({"message": f"Category '{category}' not found"}), 404
-    if not difficulty_obj:
-        return jsonify({"message": f"Difficulty '{difficulty}' not found"}), 404
-    if not type_obj:
-        return jsonify({"message": f"Type '{question_type}' not found"}), 404
-
-    category_id = category_obj.id
-    difficulty_id = difficulty_obj.id
-    type_id = type_obj.id
-
-    # Fetch questions from the API
-    base_url = "https://opentdb.com/api.php"
-    params = {
-        "amount": 3,
-        "category": category_id,
-        "difficulty": difficulty,
-        "type": question_type
-    }
-
     try:
+        # Prepare parameters for the API request
+        base_url = "https://opentdb.com/api.php"
+        params = {
+            "amount": 3,
+            "category": category,  # Directly use the category ID from the frontend
+            "difficulty": difficulty,  # Pass difficulty as-is
+            "type": question_type,  # Pass type as-is
+        }
+
+        print(f"Fetching questions with params: {params}")
+
+        # Fetch questions from Open Trivia API
         response = requests.get(base_url, params=params)
         response.raise_for_status()
         data = response.json()
+        print(f"API response: {data}")
 
-        # Debug: Log the response data from the API
-        logging.info("Fetched data from OpenTDB API: %s", data)
-
+        # Check if the API returned any questions
         if not data.get("results"):
             return jsonify({"message": "No questions found"}), 404
 
-        saved_questions = []
+        # Initialize a list for questions to be committed to the database
+        new_questions = []
 
         for item in data["results"]:
             # Check if the question already exists in the database
-            question = Question.query.filter_by(question_text=item["question"]).first()
+            existing_question = Question.query.filter_by(question_text=item["question"]).first()
 
-            if not question:
-                question = Question(
+            if not existing_question:
+                # Map difficulty and type to their respective IDs
+                difficulty_id = 1 if difficulty == "easy" else 2 if difficulty == "medium" else 3
+                type_id = 1 if question_type == "multiple" else 2
+
+                # Create a new Question object
+                new_question = Question(
                     question_text=item["question"],
                     correct_answer=item["correct_answer"],
-                    category_id=category_id,
-                    difficulty_id=difficulty_id,
-                    type_id=type_id,
+                    category_id=int(category),  # Store the category ID
+                    difficulty_id=difficulty_id,  # Map difficulty levels
+                    type_id=type_id,  # Map type IDs
                 )
-                db.session.add(question)
-                db.session.commit()
-            
-            saved_questions.append({
+                new_questions.append(new_question)
+
+        # Bulk insert new questions if any
+        if new_questions:
+            db.session.bulk_save_objects(new_questions)
+            db.session.commit()
+
+        # Prepare the saved questions for the response
+        saved_questions = [
+            {
                 "id": question.id,
                 "question": question.question_text,
                 "correct_answer": question.correct_answer,
-            })
+            }
+            for question in new_questions
+        ]
 
-        # Debug: Log the saved questions
-        logging.info("Saved questions: %s", saved_questions)
+        return jsonify({"results": saved_questions}), 201
 
-        return jsonify({"results": saved_questions})
-
+    except ValueError as e:
+        print(f"ValueError: {str(e)}")
+        return jsonify({"message": "Invalid input parameters"}), 400
     except requests.RequestException as e:
-        logging.error("Failed to fetch questions from API: %s", str(e))
+        print(f"Failed to fetch questions from API: {str(e)}")
         return jsonify({"message": f"Failed to fetch questions: {str(e)}"}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"message": "An unexpected error occurred"}), 500
 
 
 @main_bp.route("/submit_quiz", methods=["POST"])
