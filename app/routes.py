@@ -127,17 +127,25 @@ def fetch_questions():
             db.session.bulk_save_objects(new_questions)
             db.session.commit()
 
-        # Prepare the saved questions for the response
-        saved_questions = [
+        # Fetch all matching questions from the database, including new and existing
+        saved_questions = Question.query.filter(
+            Question.category_id == int(category),
+            Question.difficulty_id == difficulty_id,
+            Question.type_id == type_id
+        ).all()
+
+        response_questions = [
             {
                 "id": question.id,
                 "question": question.question_text,
                 "correct_answer": question.correct_answer,
+                "incorrect_answers": [],  # Add a way to fetch incorrect answers if stored
             }
-            for question in new_questions
+            for question in saved_questions
         ]
 
-        return jsonify({"results": saved_questions}), 201
+        return jsonify({"results": response_questions}), 200
+
 
     except ValueError as e:
         print(f"ValueError: {str(e)}")

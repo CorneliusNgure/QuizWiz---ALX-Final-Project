@@ -44,34 +44,50 @@ continueBtn.onclick = async () => {
       return;
     }
 
-    const response = await fetch(
-      `/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`
-    );
+    try {
+      const response = await fetch(
+        `/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`
+      );
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        questions = data.results.map((q, index) => ({
-          ...q,
-          question_id: q.id || index + 1,
-        }));
+      if (response.ok) {
+        const data = await response.json();
 
-        console.log("Fetched questions with IDs:", questions);
+        if (Array.isArray(data.results) && data.results.length > 0) {
+          questions = data.results.map((q, index) => ({
+            ...q,
+            question_id: q.id || index + 1,
+          }));
 
-        showQuestions(0); // Display the first question
-        questionCounter(questionNumb); // Initialize the question counter
+          console.log("Fetched questions with IDs:", questions);
+
+          showQuestions(0); // Display the first question
+          questionCounter(questionNumb); // Initialize the question counter
+        } else {
+          console.warn("No questions found for the provided options.", {
+            category,
+            difficulty,
+            type,
+          });
+          alert("No questions found for the selected options.");
+        }
       } else {
-        alert("No questions found for the selected options.");
+        // Handle server-side errors
+        const error = await response.json();
+        console.error("Server responded with an error:", error);
+        alert(error.message || "An error occurred while fetching questions.");
       }
-    } else {
-      const error = await response.json();
-      alert(error.message || "An unknown error occurred.");
+    } catch (error) {
+      // Handle unexpected errors
+      console.error("Unexpected error while fetching questions:", error);
+      alert("Failed to load questions. Please check your connection and try again.");
     }
   } catch (error) {
-    console.error("Error fetching questions:", error);
-    alert("Failed to load questions. Please try again later.");
+    console.error("An error occurred in the quiz initialization logic:", error);
+    alert("Something went wrong. Please refresh and try again.");
   }
 };
+
+
 
 
 nextBtn.onclick = () => {
