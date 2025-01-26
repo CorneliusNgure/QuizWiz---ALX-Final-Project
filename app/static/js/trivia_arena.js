@@ -12,11 +12,14 @@ const questionTotal = document.querySelector('.question-total');
 const resultBox = document.querySelector('.result-box');
 const tryAgainBtn = document.querySelector('.tryAgain-btn');
 const goHomeBtn = document.querySelector('.goHome-btn');
+const scoreText = document.querySelector('.score-text');
 
 let questionCount = 0;
 let questionNumb = 1;
 let questions = [];
+let score = 0;
 
+// Event handlers
 startBtn.onclick = () => {
   popupInfo.classList.add('active');
   main.classList.add('active');
@@ -33,68 +36,47 @@ continueBtn.onclick = async () => {
   main.classList.remove("active");
   quizBox.classList.add("active");
 
+  const category = document.getElementById("category").value.trim();
+  const difficulty = document.getElementById("difficulty").value.trim();
+  const type = document.getElementById("type").value.trim();
+
+  if (!category || !difficulty || !type) {
+    alert("Please select all quiz options before proceeding.");
+    return;
+  }
+
   try {
-    const category = document.getElementById("category").value.trim();
-    const difficulty = document.getElementById("difficulty").value.trim();
-    const type = document.getElementById("type").value.trim();
+    const response = await fetch(
+      `/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`
+    );
 
-    // Validate user input
-    if (!category || !difficulty || !type) {
-      alert("Please select all quiz options before proceeding.");
-      return;
-    }
+    if (response.ok) {
+      const data = await response.json();
 
-    try {
-      const response = await fetch(
-        `/fetch_questions?category=${category}&difficulty=${difficulty}&type=${type}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        if (Array.isArray(data.results) && data.results.length > 0) {
-          questions = data.results.map((q, index) => ({
-            ...q,
-            question_id: q.id || index + 1,
-          }));
-
-          console.log("Fetched questions with IDs:", questions);
-
-          showQuestions(0); // Display the first question
-          questionCounter(questionNumb); // Initialize the question counter
-        } else {
-          console.warn("No questions found for the provided options.", {
-            category,
-            difficulty,
-            type,
-          });
-          alert("No questions found for the selected options.");
-        }
+      if (Array.isArray(data.results) && data.results.length > 0) {
+        questions = data.results.map((q, index) => ({
+          ...q,
+          question_id: q.id || index + 1,
+        }));
+        showQuestions(0);
+        questionCounter(questionNumb);
       } else {
-        // Handle server-side errors
-        const error = await response.json();
-        console.error("Server responded with an error:", error);
-        alert(error.message || "An error occurred while fetching questions.");
+        alert("No questions found for the selected options.");
       }
-    } catch (error) {
-      // Handle unexpected errors
-      console.error("Unexpected error while fetching questions:", error);
-      alert("Failed to load questions. Please check your connection and try again.");
+    } else {
+      alert("Failed to load questions. Please try again later.");
     }
   } catch (error) {
-    console.error("An error occurred in the quiz initialization logic:", error);
-    alert("Something went wrong. Please refresh and try again.");
+    alert("An error occurred while fetching questions.");
+    console.error(error);
   }
 };
-
-
-
 
 nextBtn.onclick = () => {
   if (questionCount < questions.length - 1) {
     questionCount++;
-    showQuestions(questionCount);
     questionNumb++;
+    showQuestions(questionCount);
     questionCounter(questionNumb);
     nextBtn.classList.remove('active');
   } else {
@@ -111,6 +93,7 @@ function resetQuiz() {
   resultBox.classList.remove('active');
   questionCount = 0;
   questionNumb = 1;
+  score = 0;
   showQuestions(questionCount);
   questionCounter(questionNumb);
 }
@@ -148,18 +131,15 @@ function decodeHTML(html) {
 }
 
 function selectOption(optionElement, correctAnswer) {
-  const questionIndex = questionCount;
   const selectedAnswer = optionElement.textContent.trim();
-
-  // Store the selected answer in the corresponding question object
-  questions[questionIndex].user_answer = selectedAnswer;
 
   if (selectedAnswer === decodeHTML(correctAnswer)) {
     optionElement.classList.add('correct');
+    score++;
   } else {
     optionElement.classList.add('incorrect');
     document.querySelectorAll('.option').forEach((option) => {
-      if (option.textContent === decodeHTML(correctAnswer)) {
+      if (option.textContent.trim() === decodeHTML(correctAnswer)) {
         option.classList.add('correct');
       }
     });
@@ -174,34 +154,7 @@ function questionCounter(index) {
 }
 
 function showResultBox() {
-  console.log('Questions before submission:', questions);
-
   quizBox.classList.remove('active');
   resultBox.classList.add('active');
-
-  const answers = questions.map((q) => ({
-    question_id: q.question_id,
-    question_text: q.question,
-    user_answer: q.user_answer || '',
-    correct_answer: q.correct_answer,
-  }));
-
-  console.log('Answers to submit:', answers);
-
-  fetch('/submit_quiz', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ answers }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log('Parsed data:', data);
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      const scoreText = document.querySelector('.score-text');
-      scoreText.textContent = `Your score is ${data.total_score} / ${questions.length}`;
-    })
-    .catch((error) => console.error('Error submitting quiz:', error));
+  scoreText.textContent = `Your score is ${score} / ${questions.length}`;
 }
