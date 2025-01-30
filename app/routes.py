@@ -213,11 +213,14 @@ def submit_quiz():
             print("Missing question_id in answer:", answer)
             continue  # Skip invalid answer
 
-        user_answer = answer.get("user_answer")
+        user_answer = answer.get("selected_answer")
         question = Question.query.filter(Question.id == question_id).first()
         if not question:
             print(f"Question with ID {question_id} not found in the database.")
             continue
+        else:
+            print(user_answer)
+
 
         correct_answer = question.correct_answer if question.correct_answer else ""
         is_correct = (user_answer.strip().lower() == correct_answer.strip().lower())
