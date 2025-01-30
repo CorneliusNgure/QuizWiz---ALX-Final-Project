@@ -124,13 +124,13 @@ class Scoring(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     difficulty_id = db.Column(db.Integer, db.ForeignKey('question_difficulty.id', ondelete='CASCADE'), nullable=False)
     type_id = db.Column(db.Integer, db.ForeignKey('question_type.id', ondelete='CASCADE'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='CASCADE'), nullable=True)  # Nullable in case scoring isn't category-specific
+    # category_id = db.Column(db.Integer, db.ForeignKey('question_category.id', ondelete='CASCADE'), nullable=True)  # Nullable in case scoring isn't category-specific
     points = db.Column(db.Integer, nullable=False)
 
     # Relationships
     difficulty = db.relationship('QuestionDifficulty', backref='scoring_rules', lazy=True)
     question_type = db.relationship('QuestionType', backref='scoring_rules', lazy=True)
-    category = db.relationship('QuestionCategory', backref='scoring_rules', lazy=True)
+    # category = db.relationship('QuestionCategory', backref='scoring_rules', lazy=True)
 
     def __repr__(self):
         return (

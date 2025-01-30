@@ -225,8 +225,9 @@ def submit_quiz():
         correct_answer = question.correct_answer if question.correct_answer else ""
         is_correct = (user_answer.strip().lower() == correct_answer.strip().lower())
 
+        # fetch questions from scoring table
         scoring_rule = Scoring.query.filter_by(
-            category_id=question.category_id,
+            # category_id=question.category_id,
             difficulty_id=question.difficulty_id,
             type_id=question.type_id
         ).first()
