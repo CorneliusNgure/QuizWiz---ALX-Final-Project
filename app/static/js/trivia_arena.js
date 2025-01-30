@@ -132,6 +132,9 @@ function decodeHTML(html) {
 
 function selectOption(optionElement, correctAnswer) {
   const selectedAnswer = optionElement.textContent.trim();
+  const currentQuestion = questions[questionCount];
+
+  currentQuestion.selected_answer = selectedAnswer;  // Store answer for submission
 
   if (selectedAnswer === decodeHTML(correctAnswer)) {
     optionElement.classList.add('correct');
@@ -149,6 +152,7 @@ function selectOption(optionElement, correctAnswer) {
   document.querySelectorAll('.option').forEach((option) => option.classList.add('disabled'));
 }
 
+
 function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
 }
@@ -157,7 +161,28 @@ function showResultBox() {
   quizBox.classList.remove('active');
   resultBox.classList.add('active');
   scoreText.textContent = `Your score is ${score} / ${questions.length}`;
+
+  // Prepare answers to send to backend
+  const userAnswers = questions.map((q) => ({
+    question_id: q.question_id,
+    selected_answer: q.selected_answer || "",  // Store user’s choice
+  }));
+
+  // Send answers to backend
+  fetch("/submit_quiz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answers: userAnswers }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Quiz submitted:", data);
+    })
+    .catch((error) => {
+      console.error("Error submitting quiz:", error);
+    });
 }
+
 
 function headerScore() {
   const headerScoreText = document.querySelector('.header-score');

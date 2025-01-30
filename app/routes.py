@@ -183,8 +183,11 @@ def submit_quiz():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # Fetch category, difficulty, and type from the first question (assuming all questions belong to the same quiz type)
-    first_question = Question.query.get(answers[0]["question_id"]) if answers else None
+    if not answers:
+        return jsonify({"error": "No answers provided"}), 400
+
+    first_question_id = answers[0].get("question_id")
+    first_question = Question.query.filter(Question.id == first_question_id).first()
     if not first_question:
         return jsonify({"error": "Invalid quiz data"}), 400
 
@@ -192,7 +195,7 @@ def submit_quiz():
     difficulty_id = first_question.difficulty_id
     type_id = first_question.type_id
 
-    # Create a new quiz session with mapped values
+    # Create a new quiz session
     quiz_session = QuizSession(
         user_id=user_id,
         category_id=category_id,
@@ -208,18 +211,17 @@ def submit_quiz():
         question_id = answer.get("question_id")
         if not question_id:
             print("Missing question_id in answer:", answer)
-            continue  # Skip or handle this as needed
+            continue  # Skip invalid answer
 
         user_answer = answer.get("user_answer")
-        question = Question.query.get(question_id)
+        question = Question.query.filter(Question.id == question_id).first()
         if not question:
             print(f"Question with ID {question_id} not found in the database.")
             continue
 
-        # Check if the answer is correct
-        is_correct = (user_answer.strip().lower() == question.correct_answer.strip().lower())
+        correct_answer = question.correct_answer if question.correct_answer else ""
+        is_correct = (user_answer.strip().lower() == correct_answer.strip().lower())
 
-        # Fetch points for this question
         scoring_rule = Scoring.query.filter_by(
             category_id=question.category_id,
             difficulty_id=question.difficulty_id,
