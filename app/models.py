@@ -56,6 +56,8 @@ class Question(db.Model):
     correct_answer = db.Column(db.Text, nullable=False)
     incorrect_answers = db.Column(JSON, nullable=True) 
     attempts = db.relationship('QuestionAttempt', backref='question', lazy=True, cascade='all, delete-orphan')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
         return f"<Question {self.id}: {self.question_text[:50]}...>"

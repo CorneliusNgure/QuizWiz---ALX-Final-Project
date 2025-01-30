@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
@@ -10,7 +10,7 @@ import html
 # Define a blueprint
 main_bp = Blueprint("main", __name__)
 
-@main_bp.route("/home")
+@main_bp.route("/")
 def home():
     return render_template("home.html")
 
@@ -66,23 +66,6 @@ def trivia_arena():
         flash("Please log in to play.", "warning")
         return redirect(url_for("main.sign_in"))
     return render_template("trivia_arena.html")
-
-
-def process_api_response(api_response):
-    """
-    Processes the API response to decode HTML entities in the question text.
-    """
-    decoded_results = []
-    for question_data in api_response['results']:
-        # Decode HTML entities in the question text
-        question_data['question'] = html.unescape(question_data['question'])
-
-        # Decode incorrect answers if needed
-        question_data['incorrect_answers'] = [
-            html.unescape(answer) for answer in question_data['incorrect_answers']
-        ]
-        decoded_results.append(question_data)
-    return decoded_results
 
 
 @main_bp.route("/fetch_questions", methods=["GET"])
@@ -200,8 +183,22 @@ def submit_quiz():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # Create a new quiz session
-    quiz_session = QuizSession(user_id=user_id)
+    # Fetch category, difficulty, and type from the first question (assuming all questions belong to the same quiz type)
+    first_question = Question.query.get(answers[0]["question_id"]) if answers else None
+    if not first_question:
+        return jsonify({"error": "Invalid quiz data"}), 400
+
+    category_id = first_question.category_id
+    difficulty_id = first_question.difficulty_id
+    type_id = first_question.type_id
+
+    # Create a new quiz session with mapped values
+    quiz_session = QuizSession(
+        user_id=user_id,
+        category_id=category_id,
+        difficulty_id=difficulty_id,
+        type_id=type_id
+    )
     db.session.add(quiz_session)
     db.session.commit()
 
@@ -214,7 +211,6 @@ def submit_quiz():
             continue  # Skip or handle this as needed
 
         user_answer = answer.get("user_answer")
-
         question = Question.query.get(question_id)
         if not question:
             print(f"Question with ID {question_id} not found in the database.")

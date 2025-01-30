@@ -158,3 +158,11 @@ function showResultBox() {
   resultBox.classList.add('active');
   scoreText.textContent = `Your score is ${score} / ${questions.length}`;
 }
+
+function headerScore() {
+  const headerScoreText = document.querySelector('.header-score');
+  headerScoreText.textContent = `${userScore} of ${questions.length} Question`;
+}
+
+
+
