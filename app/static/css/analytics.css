@@ -1,0 +1,31 @@
+body {
+    background: linear-gradient(135deg, #09001a, #4b0082);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    overflow-x: hidden;
+}
+.container {
+    margin-top: 50px;
+}
+.box {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px;
+    transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+}
+.box:hover {
+    transform: scale(1.05);
+    background: #d75ce2;
+}
+.chart-container {
+    width: 80%;
+    margin: auto;
+}
+footer {
+    margin-top: 50px;
+    padding: 20px;
+    background: #111;
+}

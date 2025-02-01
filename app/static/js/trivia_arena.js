@@ -80,9 +80,28 @@ nextBtn.onclick = () => {
     questionCounter(questionNumb);
     nextBtn.classList.remove('active');
   } else {
+    console.log("Questions Completed!");
     showResultBox();
+    setTimeout(() => {
+      window.location.href = '/analytics';
+    }, 3000); // Redirects after 3 seconds
   }
 };
+
+nextBtn.onclick = () => {
+  if (questionCount < questions.length - 1) {
+    questionCount++;
+    questionNumb++;
+    showQuestions(questionCount);
+    questionCounter(questionNumb);
+    nextBtn.classList.remove('active');
+  } else {
+    console.log("Questions Completed!");
+    showResultBox();
+    window.location.href = '/analytics'; // Redirects to the analytics page
+  }
+};
+
 
 tryAgainBtn.onclick = resetQuiz;
 goHomeBtn.onclick = resetQuiz;

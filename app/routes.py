@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash, current_app
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
 import requests
-import json
-import logging
 import html
+from decimal import Decimal
+from datetime import datetime
+
 
 # Define a blueprint
 main_bp = Blueprint("main", __name__)
@@ -255,13 +256,23 @@ def submit_quiz():
     })
 
 
-@main_bp.route("/data_analytics", methods=["GET"])
-def data_analytics():
+@main_bp.route("/analytics", methods=["GET"])
+def analytics():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized access"}), 401
 
     user_id = session["user_id"]
     print(f"Fetching analytics for user_id: {user_id}")
+
+    def serialize_decimal(value):
+        """Convert Decimal to int or float."""
+        if isinstance(value, Decimal):
+            return int(value) if value % 1 == 0 else float(value)
+        return value
+
+    def serialize_datetime(value):
+        """Convert datetime to string (ISO format)."""
+        return value.isoformat() if isinstance(value, datetime) else value
 
     # Fetch user rankings
     try:
@@ -283,19 +294,18 @@ def data_analytics():
         print(f"Error fetching user results: {e}")
         user_results = []
 
-    # Fetch performance breakdown
+    # Fetch performance breakdown by difficulty
     try:
         difficulty_performance = (
             db.session.query(
-            Question.difficulty_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
-            db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+                Question.difficulty_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
+                db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+            )
+            .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
+            .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
+            .filter(QuizSession.user_id == user_id)
+            .group_by(Question.difficulty_id).all()
         )
-        .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
-        .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
-        .filter(QuizSession.user_id == user_id)
-        .group_by(Question.difficulty_id).all()
-        )
-
         print("Difficulty performance data fetched successfully.")
     except Exception as e:
         print(f"Error fetching difficulty performance: {e}")
@@ -305,38 +315,69 @@ def data_analytics():
     try:
         category_performance = (
             db.session.query(
-            Question.category_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
-            db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+                Question.category_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
+                db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+            )
+            .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
+            .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
+            .filter(QuizSession.user_id == user_id)
+            .group_by(Question.category_id).all()
         )
-        .join(QuestionAttempt, Question.id == QuestionAttempt.question_id) 
-        .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
-        .filter(QuizSession.user_id == user_id)
-        .group_by(Question.category_id).all()
-        )
-
         print("Category performance data fetched successfully.")
     except Exception as e:
         print(f"Error fetching category performance: {e}")
         category_performance = []
 
+    # Calculate quiz summary (total quizzes, average score)
+    total_quizzes = len(user_results)
+    average_score = (
+        sum([serialize_decimal(result[1]) if result[1] is not None else 0 for result in user_results])
+        / total_quizzes if total_quizzes > 0 else 0
+        )
+
+    quiz_summary = {
+        "total_quizzes": total_quizzes,
+        "average_score": round(average_score, 2)
+        }
+
+    # Calculate score trend (improving or declining)
+    if total_quizzes > 1:
+        first_half = user_results[:total_quizzes // 2]
+        second_half = user_results[total_quizzes // 2:]
+
+        first_half_avg = sum([serialize_decimal(q[1]) for q in first_half]) / len(first_half) if first_half else 0
+        second_half_avg = sum([serialize_decimal(q[1]) for q in second_half]) / len(second_half) if second_half else 0
+
+        score_trend = "improving" if second_half_avg > first_half_avg else "declining"
+    else:
+        score_trend = "insufficient data"
+
     # Prepare response
     response = {
-        "rankings": [{
-            "user_id": rank[0], "username": rank[1], "total_score": rank[2]
-        } for rank in rankings],
-        "user_results": [{
-            "quiz_id": result[0], "score": result[1], "timestamp": result[2]
-        } for result in user_results],
-        "difficulty_performance": [{
-            "difficulty_id": dp[0], "total_attempts": dp[1], "correct_answers": dp[2]
-        } for dp in difficulty_performance],
-        "category_performance": [{
-            "category_id": cp[0], "total_attempts": cp[1], "correct_answers": cp[2]
-        } for cp in category_performance]
+        "rankings": [
+            {
+                "user_id": rank[0], "username": rank[1], "total_score": serialize_decimal(rank[2])
+            } for rank in rankings
+        ],
+        "user_results": [
+            {
+                "quiz_id": result[0], "score": serialize_decimal(result[1]), "timestamp": serialize_datetime(result[2])
+            } for result in user_results
+        ],
+        "difficulty_performance": [
+            {
+                "difficulty_id": dp[0], "total_attempts": dp[1], "correct_answers": dp[2]
+            } for dp in difficulty_performance
+        ],
+        "category_performance": [
+            {
+                "category_id": cp[0], "total_attempts": cp[1], "correct_answers": cp[2]
+            } for cp in category_performance
+        ],
+        "quiz_summary": quiz_summary,
+        "score_trend": score_trend
     }
+
     print("Analytics response prepared successfully.")
     print(response)
-    return render_template('analytics.html')
-
-
-    
+    return render_template('analytics.htmml')
