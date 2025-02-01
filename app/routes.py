@@ -380,4 +380,4 @@ def analytics():
 
     print("Analytics response prepared successfully.")
     print(response)
-    return render_template('analytics.htmml')
+    return jsonify(response)
