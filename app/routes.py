@@ -253,3 +253,90 @@ def submit_quiz():
         "message": "Quiz submitted successfully!",
         "total_score": total_score
     })
+
+
+@main_bp.route("/data_analytics", methods=["GET"])
+def data_analytics():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    user_id = session["user_id"]
+    print(f"Fetching analytics for user_id: {user_id}")
+
+    # Fetch user rankings
+    try:
+        rankings = db.session.query(
+            User.id, User.username, db.func.sum(QuizSession.score).label("total_score")
+        ).join(QuizSession).group_by(User.id).order_by(db.desc("total_score")).all()
+        print("Rankings fetched successfully.")
+    except Exception as e:
+        print(f"Error fetching rankings: {e}")
+        rankings = []
+
+    # Fetch user quiz results
+    try:
+        user_results = db.session.query(
+            QuizSession.id, QuizSession.score, QuizSession.created_at
+        ).filter_by(user_id=user_id).order_by(db.desc(QuizSession.created_at)).all()
+        print("User results fetched successfully.")
+    except Exception as e:
+        print(f"Error fetching user results: {e}")
+        user_results = []
+
+    # Fetch performance breakdown
+    try:
+        difficulty_performance = (
+            db.session.query(
+            Question.difficulty_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
+            db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+        )
+        .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
+        .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
+        .filter(QuizSession.user_id == user_id)
+        .group_by(Question.difficulty_id).all()
+        )
+
+        print("Difficulty performance data fetched successfully.")
+    except Exception as e:
+        print(f"Error fetching difficulty performance: {e}")
+        difficulty_performance = []
+
+    # Fetch category performance
+    try:
+        category_performance = (
+            db.session.query(
+            Question.category_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
+            db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+        )
+        .join(QuestionAttempt, Question.id == QuestionAttempt.question_id) 
+        .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
+        .filter(QuizSession.user_id == user_id)
+        .group_by(Question.category_id).all()
+        )
+
+        print("Category performance data fetched successfully.")
+    except Exception as e:
+        print(f"Error fetching category performance: {e}")
+        category_performance = []
+
+    # Prepare response
+    response = {
+        "rankings": [{
+            "user_id": rank[0], "username": rank[1], "total_score": rank[2]
+        } for rank in rankings],
+        "user_results": [{
+            "quiz_id": result[0], "score": result[1], "timestamp": result[2]
+        } for result in user_results],
+        "difficulty_performance": [{
+            "difficulty_id": dp[0], "total_attempts": dp[1], "correct_answers": dp[2]
+        } for dp in difficulty_performance],
+        "category_performance": [{
+            "category_id": cp[0], "total_attempts": cp[1], "correct_answers": cp[2]
+        } for cp in category_performance]
+    }
+    print("Analytics response prepared successfully.")
+    print(response)
+    return render_template('analytics.html')
+
+
+    
