@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash, desc, func
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
@@ -7,6 +7,7 @@ import html
 from decimal import Decimal
 from datetime import datetime
 import json
+from sqlalchemy import desc, func
 
 
 # Blueprint definition
