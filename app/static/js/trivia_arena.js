@@ -73,31 +73,25 @@ continueBtn.onclick = async () => {
 };
 
 nextBtn.onclick = () => {
+  const selectedOption = document.querySelector(".option.selected");
+
+  if (!selectedOption) {
+    alert("Please select an answer before proceeding.");
+    return;
+  }
+
+  // Store the selected answer in the questions array
+  questions[questionCount].selected_answer = selectedOption.textContent.trim();
+
   if (questionCount < questions.length - 1) {
     questionCount++;
     questionNumb++;
     showQuestions(questionCount);
     questionCounter(questionNumb);
-    nextBtn.classList.remove('active');
+    nextBtn.classList.remove("active");
   } else {
     console.log("Questions Completed!");
     showResultBox();
-    setTimeout(() => {
-      window.location.href = '/analytics';
-    }, 3000); // Redirects after 3 seconds
-  }
-};
-
-nextBtn.onclick = () => {
-  if (questionCount < questions.length - 1) {
-      questionCount++;
-      questionNumb++;
-      showQuestions(questionCount);
-      questionCounter(questionNumb);
-      nextBtn.classList.remove('active');
-  } else {
-      console.log("Questions Completed!");
-      showResultBox();
   }
 };
 
@@ -155,6 +149,14 @@ function selectOption(optionElement, correctAnswer) {
 
   currentQuestion.selected_answer = selectedAnswer;  // Store answer for submission
 
+  // Remove 'selected' from any previously selected option
+  document.querySelectorAll('.option').forEach((option) => {
+    option.classList.remove('selected');
+  });
+
+  // Add 'selected' class to the clicked option
+  optionElement.classList.add('selected');
+
   if (selectedAnswer === decodeHTML(correctAnswer)) {
     optionElement.classList.add('correct');
     score++;
@@ -172,11 +174,49 @@ function selectOption(optionElement, correctAnswer) {
 }
 
 
+
 function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
 }
 
-sadf
+function showResultBox() {
+  quizBox.classList.remove("active");
+  resultBox.classList.add("active");
+
+  // Prepare answers for submission
+  const userAnswers = questions.map((q) => ({
+    question_id: q.question_id,
+    selected_answer: q.selected_answer || "", // Ensure there's always a value
+  }));
+
+  // Prevent sending empty answers
+  if (userAnswers.length === 0) {
+    console.error("No answers recorded.");
+    return;
+  }
+
+  // Send answers to backend
+  fetch("/submit_quiz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ answers: userAnswers }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Quiz submitted:", data);
+
+      if (data.total_score !== undefined) {
+        // Update the result box with the score from the backend
+        scoreText.textContent = `Your final score is ${data.total_score}`;
+      } else {
+        scoreText.textContent = "Quiz submitted, but no score received.";
+      }
+    })
+    .catch((error) => {
+      console.error("Error submitting quiz:", error);
+      scoreText.textContent = "Error submitting quiz. Please try again.";
+    });
+}
 
 
 function headerScore() {

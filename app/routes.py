@@ -345,8 +345,8 @@ def analytics():
         first_half = user_results[:total_quizzes // 2]
         second_half = user_results[total_quizzes // 2:]
 
-        first_half_avg = sum([serialize_decimal(q[1]) for q in first_half]) / len(first_half) if first_half else 0
-        second_half_avg = sum([serialize_decimal(q[1]) for q in second_half]) / len(second_half) if second_half else 0
+        first_half_avg = sum([serialize_decimal(q[1]) if q[1] is not None else 0 for q in first_half]) / len(first_half) if first_half else 0
+        second_half_avg = sum([serialize_decimal(q[1]) if q[1] is not None else 0 for q in second_half]) / len(second_half) if second_half else 0
 
         score_trend = "improving" if second_half_avg > first_half_avg else "declining"
     else:
