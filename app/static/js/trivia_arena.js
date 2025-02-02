@@ -90,17 +90,17 @@ nextBtn.onclick = () => {
 
 nextBtn.onclick = () => {
   if (questionCount < questions.length - 1) {
-    questionCount++;
-    questionNumb++;
-    showQuestions(questionCount);
-    questionCounter(questionNumb);
-    nextBtn.classList.remove('active');
+      questionCount++;
+      questionNumb++;
+      showQuestions(questionCount);
+      questionCounter(questionNumb);
+      nextBtn.classList.remove('active');
   } else {
-    console.log("Questions Completed!");
-    showResultBox();
-    window.location.href = '/analytics'; // Redirects to the analytics page
+      console.log("Questions Completed!");
+      showResultBox();
   }
 };
+
 
 
 tryAgainBtn.onclick = resetQuiz;
@@ -176,31 +176,7 @@ function questionCounter(index) {
   questionTotal.textContent = `${index} of ${questions.length} Questions`;
 }
 
-function showResultBox() {
-  quizBox.classList.remove('active');
-  resultBox.classList.add('active');
-  scoreText.textContent = `Your score is ${score} / ${questions.length}`;
-
-  // Prepare answers to send to backend
-  const userAnswers = questions.map((q) => ({
-    question_id: q.question_id,
-    selected_answer: q.selected_answer || "",  // Store user’s choice
-  }));
-
-  // Send answers to backend
-  fetch("/submit_quiz", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ answers: userAnswers }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log("Quiz submitted:", data);
-    })
-    .catch((error) => {
-      console.error("Error submitting quiz:", error);
-    });
-}
+sadf
 
 
 function headerScore() {
