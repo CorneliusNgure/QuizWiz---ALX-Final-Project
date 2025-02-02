@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash, desc, func
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
@@ -6,9 +6,10 @@ import requests
 import html
 from decimal import Decimal
 from datetime import datetime
+import json
 
 
-# Define a blueprint
+# Blueprint definition
 main_bp = Blueprint("main", __name__)
 
 @main_bp.route("/")
@@ -274,52 +275,71 @@ def analytics():
         """Convert datetime to string (ISO format)."""
         return value.isoformat() if isinstance(value, datetime) else value
 
-    # Fetch user rankings
     try:
+        # Fetch user rankings
         rankings = db.session.query(
-            User.id, User.username, db.func.sum(QuizSession.score).label("total_score")
-        ).join(QuizSession).group_by(User.id).order_by(db.desc("total_score")).all()
+            User.username, func.sum(QuizSession.score).label("total_score")
+        ).join(QuizSession).group_by(User.id).order_by(desc("total_score")).all()
+
+        rankings = [{"username": r.username, "total_score": serialize_decimal(r.total_score)} for r in rankings]
     except Exception as e:
         print(f"Error fetching rankings: {e}")
         rankings = []
 
-    # Fetch user quiz results
     try:
+        # Fetch user quiz results
         user_results = db.session.query(
             QuizSession.id, QuizSession.score, QuizSession.created_at
-        ).filter_by(user_id=user_id).order_by(db.desc(QuizSession.created_at)).all()
+        ).filter_by(user_id=user_id).order_by(desc(QuizSession.created_at)).all()
+
+        user_results = [
+            {"quiz_id": r.id, "score": serialize_decimal(r.score), "timestamp": serialize_datetime(r.created_at)}
+            for r in user_results
+        ]
     except Exception as e:
         print(f"Error fetching user results: {e}")
         user_results = []
 
-    # Fetch performance breakdown by difficulty
     try:
+        # Fetch performance breakdown by difficulty
         difficulty_performance = (
             db.session.query(
-                Question.difficulty_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
-                db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+                Question.difficulty_id,
+                func.count(QuestionAttempt.id).label("total_attempts"),
+                func.sum(QuestionAttempt.is_correct).label("correct_answers")
             )
             .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
             .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
             .filter(QuizSession.user_id == user_id)
             .group_by(Question.difficulty_id).all()
         )
+
+        difficulty_performance = [
+            {"difficulty_id": d.difficulty_id, "total_attempts": d.total_attempts, "correct_answers": d.correct_answers}
+            for d in difficulty_performance
+        ]
     except Exception as e:
         print(f"Error fetching difficulty performance: {e}")
         difficulty_performance = []
 
-    # Fetch category performance
     try:
+        # Fetch category performance
         category_performance = (
             db.session.query(
-                Question.category_id, db.func.count(QuestionAttempt.id).label("total_attempts"),
-                db.func.sum(QuestionAttempt.is_correct).label("correct_answers")
+                Question.category_id,
+                func.count(QuestionAttempt.id).label("total_attempts"),
+                func.sum(QuestionAttempt.is_correct).label("correct_answers")
             )
             .join(QuestionAttempt, Question.id == QuestionAttempt.question_id)
             .join(QuizSession, QuizSession.id == QuestionAttempt.quiz_session_id)
             .filter(QuizSession.user_id == user_id)
             .group_by(Question.category_id).all()
         )
+
+        category_performance = [
+            {"category_id": c.category_id, "total_attempts": c.total_attempts, "correct_answers": c.correct_answers}
+            for c in category_performance
+        ]
     except Exception as e:
         print(f"Error fetching category performance: {e}")
         category_performance = []
@@ -327,8 +347,8 @@ def analytics():
     # Calculate quiz summary
     total_quizzes = len(user_results)
     average_score = (
-        sum([serialize_decimal(result[1]) if result[1] is not None else 0 for result in user_results])
-        / total_quizzes if total_quizzes > 0 else 0
+        sum([r["score"] if r["score"] is not None else 0 for r in user_results]) / total_quizzes
+        if total_quizzes > 0 else 0
     )
 
     quiz_summary = {
@@ -341,18 +361,21 @@ def analytics():
         first_half = user_results[:total_quizzes // 2]
         second_half = user_results[total_quizzes // 2:]
 
-        first_half_avg = sum([serialize_decimal(q[1]) if q[1] is not None else 0 for q in first_half]) / len(first_half) if first_half else 0
-        second_half_avg = sum([serialize_decimal(q[1]) if q[1] is not None else 0 for q in second_half]) / len(second_half) if second_half else 0
+        first_half_avg = sum([q["score"] for q in first_half]) / len(first_half) if first_half else 0
+        second_half_avg = sum([q["score"] for q in second_half]) / len(second_half) if second_half else 0
 
         score_trend = "improving" if second_half_avg > first_half_avg else "declining"
     else:
         score_trend = "insufficient data"
 
-    return render_template("analytics.html", 
-        rankings=rankings, 
-        user_results=user_results, 
-        difficulty_performance=difficulty_performance, 
-        category_performance=category_performance, 
-        quiz_summary=quiz_summary, 
-        score_trend=score_trend
-    )
+    # Convert analytics data to JSON and pass it to the template
+    analytics_data = json.dumps({
+        "rankings": rankings,
+        "user_results": user_results,
+        "difficulty_performance": difficulty_performance,
+        "category_performance": category_performance,
+        "quiz_summary": quiz_summary,
+        "score_trend": score_trend
+    })
+
+    return render_template("analytics.html", analytics_data=analytics_data)

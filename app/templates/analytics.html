@@ -7,7 +7,30 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <style>
+        .box {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .play-again-btn, .go-home-btn {
+            font-size: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .play-again-btn:hover, .go-home-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark p-3">
@@ -19,117 +42,119 @@
     </nav>
 
     <div class="container">
-        <h1 class="mb-4 text-center">Quiz Analytics</h1>
-        <p id="performance-message" class="text-center">Your recent quiz performance overview.</p>
+        <h1 class="mb-4">Quiz Analytics</h1>
+        <p id="performance-message"></p>
 
-        <!-- Summary Sections -->
         <div class="row">
             <div class="col-md-4">
                 <div class="box" id="results-summary">
-                    <h3>📊 Results Summary</h3>
-                    <table class="table table-striped">
+                    📊 <h3>Results Summary</h3>
+                    <table class="table">
                         <thead>
-                            <tr><th>Quiz ID</th><th>Score</th><th>Timestamp</th></tr>
+                            <tr>
+                                <th>Quiz ID</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                            </tr>
                         </thead>
-                        <tbody>
-                            <tr><td>41</td><td>30</td><td>Feb 1, 12:13 PM</td></tr>
-                            <tr><td>40</td><td>36</td><td>Feb 1, 11:53 AM</td></tr>
-                            <tr><td>39</td><td>36</td><td>Feb 1, 11:50 AM</td></tr>
-                            <tr><td>38</td><td>0</td><td>Feb 1, 11:48 AM</td></tr>
-                        </tbody>
+                        <tbody id="results-summary-body"></tbody>
                     </table>
                 </div>
             </div>
             <div class="col-md-4">
+              <div class="box" id="category-strengths">
+                  🎯 <h3>Attempted Categories</h3>
+                  <table class="table">
+                      <thead>
+                          <tr>
+                              <th>Category</th>
+                              <th>Attempts</th>
+                              <th>Hmm?</th>
+                          </tr>
+                      </thead>
+                      <tbody id="category-performance-body"></tbody>
+                  </table>
+              </div>
+          </div>
+            <div class="col-md-4">
                 <div class="box" id="leaderboard-ranking">
-                    <h3>🏆 Leaderboard Ranking</h3>
-                    <p><strong>Username:</strong> admin</p>
-                    <p><strong>Total Score:</strong> 616</p>
+                    🏆 <h3>Leaderboard Ranking</h3>
+                    <p id="leaderboard-info">Loading...</p>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="box" id="time-performance">
-                    <h3>⏳ Time-Based Performance</h3>
+                    ⏳ <h3>Time-Based Performance</h3>
                     <canvas id="timeChart"></canvas>
                 </div>
             </div>
         </div>
-
-        <!-- Performance Data -->
         <div class="row">
             <div class="col-md-4">
                 <div class="box" id="progress-over-time">
-                    <h3>📈 Progress Over Time</h3>
+                    📈 <h3>Progress Over Time</h3>
                     <canvas id="progressChart"></canvas>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="box" id="category-strengths">
-                    <h3>🎯 Category Strengths & Weaknesses</h3>
-                    <table class="table table-striped">
-                        <thead>
-                            <tr><th>Category ID</th><th>Attempts</th><th>Correct</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>18</td><td>36</td><td>✔</td></tr>
-                            <tr><td>9</td><td>39</td><td>✔</td></tr>
-                            <tr><td>10</td><td>9</td><td>✔</td></tr>
-                            <tr><td>13</td><td>6</td><td>✔</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="col-md-4">
                 <div class="box" id="achievements-streaks">
-                    <h3>🏅 Achievements & Streaks</h3>
-                    <p>Current Streak: <strong>5 Wins</strong></p>
-                    <p>Highest Score: <strong>36</strong></p>
+                    🏅 <h3>Achievements & Streaks</h3>
+                    <p id="achievements-info">No achievements yet.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Accuracy Chart -->
-        <div class="chart-container mt-4">
-            <canvas id="accuracyChart"></canvas>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="d-flex justify-content-center gap-5 mt-4">
-            <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
-            <button id="goHomeBtn" class="btn btn-danger">Go Home to Mommy!</button>
+        <div class="button-group">
+            <button class="btn btn-primary play-again-btn">Play Again</button>
+            <button class="btn btn-danger go-home-btn">Go Home to Mommy!</button>
         </div>
     </div>
 
-    <footer class="text-center mt-4">
-        <p>&copy; 2025 QuizWiz. All rights reserved.</p>
+    <footer>
+        <p class="text-center mt-4">&copy; 2025 QuizWiz. All rights reserved.</p>
     </footer>
 
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        .container {
-            min-height: 80vh;
-        }
-
-        .box {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        #playAgainBtn, #goHomeBtn {
-            padding: 12px 25px;
-            font-size: 1.4rem;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        #playAgainBtn:hover, #goHomeBtn:hover {
-            transform: scale(1.1);
-        }
-    </style>
+    <script>
+      // Read analytics data from the template
+      const analyticsData = JSON.parse('{{ analytics_data | safe }}');
+  
+      document.addEventListener("DOMContentLoaded", function () {
+          console.log("Fetched Analytics Data:", analyticsData);
+  
+          // Populate Results Summary
+          const resultsTable = document.getElementById('results-summary-body');
+          resultsTable.innerHTML = analyticsData.user_results.map(result => 
+              `<tr>
+                  <td>${result.quiz_id}</td>
+                  <td>${result.score}</td>
+                  <td>${new Date(result.timestamp).toLocaleString()}</td>
+              </tr>`
+          ).join('');
+  
+          // Populate Leaderboard
+          const leaderboard = document.getElementById('leaderboard-info');
+          if (analyticsData.rankings.length > 0) {
+              const userRanking = analyticsData.rankings[0];
+              leaderboard.innerHTML = `<strong>${userRanking.username}</strong> - Total Score: ${userRanking.total_score}`;
+          } else {
+              leaderboard.innerHTML = "No ranking data available.";
+          }
+  
+          // Populate Category Performance
+          const categoryTable = document.getElementById('category-performance-body');
+          categoryTable.innerHTML = analyticsData.category_performance.map(category => 
+              `<tr>
+                  <td>Category ${category.category_id}</td>
+                  <td>${category.total_attempts}</td>
+                  <td>${category.correct_answers ? "✔" : "❌"}</td>
+              </tr>`
+          ).join('');
+  
+          // Populate Achievements & Streaks
+          const achievements = document.getElementById('achievements-info');
+          achievements.textContent = analyticsData.user_results.length > 5 ? "🔥 You're on a hot streak!" : "Keep playing to unlock streaks!";
+      });
+  </script>
+  
 </body>
 </html>
