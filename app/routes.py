@@ -259,7 +259,7 @@ def submit_quiz():
 @main_bp.route("/analytics", methods=["GET"])
 def analytics():
     if "user_id" not in session:
-        return jsonify({"error": "Unauthorized access"}), 401
+        return redirect(url_for("auth.login"))  # Redirect to login if not authenticated
 
     user_id = session["user_id"]
     print(f"Fetching analytics for user_id: {user_id}")
@@ -279,7 +279,6 @@ def analytics():
         rankings = db.session.query(
             User.id, User.username, db.func.sum(QuizSession.score).label("total_score")
         ).join(QuizSession).group_by(User.id).order_by(db.desc("total_score")).all()
-        print("Rankings fetched successfully.")
     except Exception as e:
         print(f"Error fetching rankings: {e}")
         rankings = []
@@ -289,7 +288,6 @@ def analytics():
         user_results = db.session.query(
             QuizSession.id, QuizSession.score, QuizSession.created_at
         ).filter_by(user_id=user_id).order_by(db.desc(QuizSession.created_at)).all()
-        print("User results fetched successfully.")
     except Exception as e:
         print(f"Error fetching user results: {e}")
         user_results = []
@@ -306,7 +304,6 @@ def analytics():
             .filter(QuizSession.user_id == user_id)
             .group_by(Question.difficulty_id).all()
         )
-        print("Difficulty performance data fetched successfully.")
     except Exception as e:
         print(f"Error fetching difficulty performance: {e}")
         difficulty_performance = []
@@ -323,24 +320,23 @@ def analytics():
             .filter(QuizSession.user_id == user_id)
             .group_by(Question.category_id).all()
         )
-        print("Category performance data fetched successfully.")
     except Exception as e:
         print(f"Error fetching category performance: {e}")
         category_performance = []
 
-    # Calculate quiz summary (total quizzes, average score)
+    # Calculate quiz summary
     total_quizzes = len(user_results)
     average_score = (
         sum([serialize_decimal(result[1]) if result[1] is not None else 0 for result in user_results])
         / total_quizzes if total_quizzes > 0 else 0
-        )
+    )
 
     quiz_summary = {
         "total_quizzes": total_quizzes,
         "average_score": round(average_score, 2)
-        }
+    }
 
-    # Calculate score trend (improving or declining)
+    # Calculate score trend
     if total_quizzes > 1:
         first_half = user_results[:total_quizzes // 2]
         second_half = user_results[total_quizzes // 2:]
@@ -352,33 +348,11 @@ def analytics():
     else:
         score_trend = "insufficient data"
 
-    # Prepare response
-    response = {
-        "rankings": [
-            {
-                "user_id": rank[0], "username": rank[1], "total_score": serialize_decimal(rank[2])
-            } for rank in rankings
-        ],
-        "user_results": [
-            {
-                "quiz_id": result[0], "score": serialize_decimal(result[1]), "timestamp": serialize_datetime(result[2])
-            } for result in user_results
-        ],
-        "difficulty_performance": [
-            {
-                "difficulty_id": dp[0], "total_attempts": dp[1], "correct_answers": dp[2]
-            } for dp in difficulty_performance
-        ],
-        "category_performance": [
-            {
-                "category_id": cp[0], "total_attempts": cp[1], "correct_answers": cp[2]
-            } for cp in category_performance
-        ],
-        "quiz_summary": quiz_summary,
-        "score_trend": score_trend
-    }
-
-    print("Analytics response prepared successfully.")
-    print(response)
-    # return render_template("analytics.html")
-    return jsonify(response)
+    return render_template("analytics.html", 
+        rankings=rankings, 
+        user_results=user_results, 
+        difficulty_performance=difficulty_performance, 
+        category_performance=category_performance, 
+        quiz_summary=quiz_summary, 
+        score_trend=score_trend
+    )

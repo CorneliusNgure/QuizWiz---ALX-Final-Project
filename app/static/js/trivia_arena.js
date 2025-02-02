@@ -89,11 +89,17 @@ nextBtn.onclick = () => {
     showQuestions(questionCount);
     questionCounter(questionNumb);
     nextBtn.classList.remove("active");
+
+    // If it's the last question, change "Next" to "Submit"
+    if (questionCount === questions.length - 1) {
+      nextBtn.textContent = "Submit";
+    }
   } else {
-    console.log("Questions Completed!");
-    showResultBox();
+    console.log("Quiz Completed!");
+    window.location.href = "/analytics";  // Redirect to analytics page
   }
 };
+
 
 
 
