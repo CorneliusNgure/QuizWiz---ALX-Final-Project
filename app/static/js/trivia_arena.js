@@ -80,7 +80,7 @@ nextBtn.onclick = () => {
     return;
   }
 
-  // Store the selected answer in the questions array
+  // Store both question_id and selected_answer in the questions array
   questions[questionCount].selected_answer = selectedOption.textContent.trim();
 
   if (questionCount < questions.length - 1) {
@@ -95,13 +95,41 @@ nextBtn.onclick = () => {
       nextBtn.textContent = "Submit";
     }
   } else {
-    console.log("Quiz Completed!");
-    window.location.href = "/analytics";  // Redirect to analytics page
+    // Send answers to backend before redirecting
+    submitAnswers(questions);
   }
 };
 
+// Function to submit answers
+function submitAnswers(questions) {
+  // Prepare the data in the format the backend expects
+  const answersPayload = questions.map(q => ({
+    question_id: q.id,  // Make sure the question object has an `id` field
+    selected_answer: q.selected_answer
+  }));
 
-
+  fetch("/submit_quiz", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ answers: answersPayload })  // Match backend expectation
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message) {
+      console.log("Answers submitted successfully!", data);
+      window.location.href = "/analytics";  // Redirect after successful submission
+    } else {
+      console.error("Failed to submit answers:", data.error);
+      alert("There was an error submitting your answers: " + data.error);
+    }
+  })
+  .catch(error => {
+    console.error("Error:", error);
+    alert("There was an error submitting your answers. Please try again.");
+  });
+}
 
 tryAgainBtn.onclick = resetQuiz;
 goHomeBtn.onclick = resetQuiz;

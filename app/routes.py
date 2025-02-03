@@ -98,7 +98,7 @@ def fetch_questions():
         response = requests.get(base_url, params=params)
         response.raise_for_status()
         data = response.json()
-        print(f"API response: {data}")
+        print(f"Data from API: {data}")
 
         # Check if the API returned any questions
         if not data.get("results"):
@@ -141,7 +141,7 @@ def fetch_questions():
             Question.category_id == int(category),
             Question.difficulty_id == difficulty_id,
             Question.type_id == type_id
-        ).all()
+        ).limit(3).all()
 
         response_questions = [
             {
@@ -379,6 +379,8 @@ def analytics():
         "quiz_summary": quiz_summary,
         "score_trend": score_trend
     })
+
+    print("-------------------------------------------------")
 
     print("Analytics Data:", analytics_data)
 
