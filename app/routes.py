@@ -258,7 +258,6 @@ def submit_quiz():
     })
 
 
-
 @main_bp.route("/analytics", methods=["GET"])
 def analytics():
     if "user_id" not in session:
@@ -289,13 +288,38 @@ def analytics():
         rankings = []
 
     try:
-        # Fetch user quiz results
-        user_results = db.session.query(
-            QuizSession.id, QuizSession.score, QuizSession.created_at
-        ).filter_by(user_id=user_id).order_by(desc(QuizSession.created_at)).all()
+        # Fetch category, difficulty, and type mappings
+        category_map = {c.id: c.name for c in db.session.query(QuestionCategory.id, QuestionCategory.name).all()}
+        difficulty_map = {d.id: d.level for d in db.session.query(QuestionDifficulty.id, QuestionDifficulty.level).all()}
+        type_map = {t.id: t.type for t in db.session.query(QuestionType.id, QuestionType.type).all()}
 
+        # Fetch user quiz results (join to get category, difficulty, type)
+        user_results = (
+            db.session.query(
+                QuizSession.id,
+                QuizSession.score,
+                QuizSession.created_at,
+                Question.category_id,
+                Question.difficulty_id,
+                Question.type_id
+            )
+            .join(QuestionAttempt, QuizSession.id == QuestionAttempt.quiz_session_id)
+            .join(Question, Question.id == QuestionAttempt.question_id)
+            .filter(QuizSession.user_id == user_id)
+            .order_by(desc(QuizSession.created_at))
+            .all()
+        )
+
+        # Convert to human-readable format
         user_results = [
-            {"quiz_id": r.id, "score": serialize_decimal(r.score), "timestamp": serialize_datetime(r.created_at)}
+            {
+                "quiz_id": r.id,
+                "category": category_map.get(r.category_id, "Unknown"),
+                "difficulty": difficulty_map.get(r.difficulty_id, "Unknown"),
+                "type": type_map.get(r.type_id, "Unknown"),
+                "score": serialize_decimal(r.score),
+                "timestamp": serialize_datetime(r.created_at)
+            }
             for r in user_results
         ]
     except Exception as e:
@@ -317,7 +341,11 @@ def analytics():
         )
 
         difficulty_performance = [
-            {"difficulty_id": d.difficulty_id, "total_attempts": d.total_attempts, "correct_answers": d.correct_answers}
+            {
+                "difficulty": difficulty_map.get(d.difficulty_id, "Unknown"),
+                "total_attempts": d.total_attempts,
+                "correct_answers": d.correct_answers
+            }
             for d in difficulty_performance
         ]
     except Exception as e:
@@ -339,7 +367,11 @@ def analytics():
         )
 
         category_performance = [
-            {"category_id": c.category_id, "total_attempts": c.total_attempts, "correct_answers": c.correct_answers}
+            {
+                "category": category_map.get(c.category_id, "Unknown"),
+                "total_attempts": c.total_attempts,
+                "correct_answers": c.correct_answers
+            }
             for c in category_performance
         ]
     except Exception as e:
@@ -381,7 +413,6 @@ def analytics():
     })
 
     print("-------------------------------------------------")
-
     print("Analytics Data:", analytics_data)
 
     return render_template("analytics.html", analytics_data=analytics_data)

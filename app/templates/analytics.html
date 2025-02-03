@@ -46,68 +46,49 @@
         <p id="performance-message"></p>
 
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="box" id="results-summary">
                     📊 <h3>Results Summary</h3>
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>Quiz ID</th>
+                                <th>Category</th>
+                                <th>Difficulty</th>
+                                <th>Type</th>
                                 <th>Score</th>
-                                <th>Date</th>
                             </tr>
                         </thead>
                         <tbody id="results-summary-body"></tbody>
                     </table>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="box" id="leaderboard-ranking">
                     🏆 <h3>Leaderboard Ranking</h3>
-                    <p id="leaderboard-info">Loading...</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="box" id="time-performance">
-                    ⏳ <h3>Time-Based Performance</h3>
-                    <canvas id="timeChart"></canvas>
+                    <ul id="leaderboard-list" class="list-group"></ul>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="box" id="progress-over-time">
-                    📈 <h3>Progress Over Time</h3>
+                    📈 <h3>Score Progression</h3>
                     <canvas id="progressChart"></canvas>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="box" id="category-strengths">
                     🎯 <h3>Category Strengths & Weaknesses</h3>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Attempts</th>
-                                <th>Correct</th>
-                            </tr>
-                        </thead>
-                        <tbody id="category-performance-body"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="box" id="achievements-streaks">
-                    🏅 <h3>Achievements & Streaks</h3>
-                    <p id="achievements-info">No achievements yet.</p>
+                    <canvas id="categoryChart"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="button-group">
             <button class="btn btn-primary play-again-btn">Play Again</button>
-            <button class="btn btn-danger go-home-btn">Go Home to Mommy!</button>
+            <button class="btn btn-danger go-home-btn">Go Home</button>
         </div>
     </div>
 
@@ -116,45 +97,51 @@
     </footer>
 
     <script>
-    // Read analytics data from the template
     const analyticsData = JSON.parse('{{ analytics_data | safe }}');
 
     document.addEventListener("DOMContentLoaded", function () {
         console.log("Fetched Analytics Data:", analyticsData);
 
-        // Populate Results Summary
+        // Populate Results Summary Table
         const resultsTable = document.getElementById('results-summary-body');
-        resultsTable.innerHTML = analyticsData.user_results.map(result => 
-            `<tr>
+        resultsTable.innerHTML = analyticsData.user_results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .map(result => `
+            <tr>
                 <td>${result.quiz_id}</td>
+                <td>${result.category}</td>
+                <td>${result.difficulty}</td>
+                <td>${result.type}</td>
                 <td>${result.score}</td>
-                <td>${new Date(result.timestamp).toLocaleString()}</td>
-            </tr>`
-        ).join('');
+            </tr>`).join('');
 
         // Populate Leaderboard
-        const leaderboard = document.getElementById('leaderboard-info');
-        if (analyticsData.rankings.length > 0) {
-            const userRanking = analyticsData.rankings[0];
-            leaderboard.innerHTML = `<strong>${userRanking.username}</strong> - Total Score: ${userRanking.total_score}`;
-        } else {
-            leaderboard.innerHTML = "No ranking data available.";
-        }
-
-        // Populate Category Performance
-        const categoryTable = document.getElementById('category-performance-body');
-        categoryTable.innerHTML = analyticsData.category_performance.map(category => 
-            `<tr>
-                <td>Category ${category.category_id}</td>
-                <td>${category.total_attempts}</td>
-                <td>${category.correct_answers ? "✔" : "❌"}</td>
-            </tr>`
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.innerHTML = analyticsData.rankings.slice(0, 3).map(rank => 
+            `<li class="list-group-item"><strong>${rank.username}</strong> - Score: ${rank.total_score}</li>`
         ).join('');
 
-        // Populate Achievements & Streaks
-        const achievements = document.getElementById('achievements-info');
-        achievements.textContent = analyticsData.user_results.length > 5 ? "🔥 You're on a hot streak!" : "Keep playing to unlock streaks!";
+        // Populate Category Strengths & Weaknesses Chart
+        const categoryLabels = analyticsData.category_performance.map(c => c.category_name);
+        const categoryData = analyticsData.category_performance.map(c => c.correct_answers);
+
+        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: 'Correct Answers',
+                    data: categoryData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
     });
     </script>
-    </body>
+</body>
 </html>
