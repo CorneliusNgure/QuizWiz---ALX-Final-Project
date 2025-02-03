@@ -258,6 +258,7 @@ def submit_quiz():
     })
 
 
+
 @main_bp.route("/analytics", methods=["GET"])
 def analytics():
     if "user_id" not in session:
@@ -378,5 +379,7 @@ def analytics():
         "quiz_summary": quiz_summary,
         "score_trend": score_trend
     })
+
+    print("Analytics Data:", analytics_data)
 
     return render_template("analytics.html", analytics_data=analytics_data)

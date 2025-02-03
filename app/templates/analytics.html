@@ -62,21 +62,6 @@
                 </div>
             </div>
             <div class="col-md-4">
-              <div class="box" id="category-strengths">
-                  🎯 <h3>Attempted Categories</h3>
-                  <table class="table">
-                      <thead>
-                          <tr>
-                              <th>Category</th>
-                              <th>Attempts</th>
-                              <th>Hmm?</th>
-                          </tr>
-                      </thead>
-                      <tbody id="category-performance-body"></tbody>
-                  </table>
-              </div>
-          </div>
-            <div class="col-md-4">
                 <div class="box" id="leaderboard-ranking">
                     🏆 <h3>Leaderboard Ranking</h3>
                     <p id="leaderboard-info">Loading...</p>
@@ -89,11 +74,27 @@
                 </div>
             </div>
         </div>
+
         <div class="row">
             <div class="col-md-4">
                 <div class="box" id="progress-over-time">
                     📈 <h3>Progress Over Time</h3>
                     <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="box" id="category-strengths">
+                    🎯 <h3>Category Strengths & Weaknesses</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Attempts</th>
+                                <th>Correct</th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-performance-body"></tbody>
+                    </table>
                 </div>
             </div>
             <div class="col-md-4">
@@ -115,46 +116,45 @@
     </footer>
 
     <script>
-      // Read analytics data from the template
-      const analyticsData = JSON.parse('{{ analytics_data | safe }}');
-  
-      document.addEventListener("DOMContentLoaded", function () {
-          console.log("Fetched Analytics Data:", analyticsData);
-  
-          // Populate Results Summary
-          const resultsTable = document.getElementById('results-summary-body');
-          resultsTable.innerHTML = analyticsData.user_results.map(result => 
-              `<tr>
-                  <td>${result.quiz_id}</td>
-                  <td>${result.score}</td>
-                  <td>${new Date(result.timestamp).toLocaleString()}</td>
-              </tr>`
-          ).join('');
-  
-          // Populate Leaderboard
-          const leaderboard = document.getElementById('leaderboard-info');
-          if (analyticsData.rankings.length > 0) {
-              const userRanking = analyticsData.rankings[0];
-              leaderboard.innerHTML = `<strong>${userRanking.username}</strong> - Total Score: ${userRanking.total_score}`;
-          } else {
-              leaderboard.innerHTML = "No ranking data available.";
-          }
-  
-          // Populate Category Performance
-          const categoryTable = document.getElementById('category-performance-body');
-          categoryTable.innerHTML = analyticsData.category_performance.map(category => 
-              `<tr>
-                  <td>Category ${category.category_id}</td>
-                  <td>${category.total_attempts}</td>
-                  <td>${category.correct_answers ? "✔" : "❌"}</td>
-              </tr>`
-          ).join('');
-  
-          // Populate Achievements & Streaks
-          const achievements = document.getElementById('achievements-info');
-          achievements.textContent = analyticsData.user_results.length > 5 ? "🔥 You're on a hot streak!" : "Keep playing to unlock streaks!";
-      });
-  </script>
-  
-</body>
+    // Read analytics data from the template
+    const analyticsData = JSON.parse('{{ analytics_data | safe }}');
+
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("Fetched Analytics Data:", analyticsData);
+
+        // Populate Results Summary
+        const resultsTable = document.getElementById('results-summary-body');
+        resultsTable.innerHTML = analyticsData.user_results.map(result => 
+            `<tr>
+                <td>${result.quiz_id}</td>
+                <td>${result.score}</td>
+                <td>${new Date(result.timestamp).toLocaleString()}</td>
+            </tr>`
+        ).join('');
+
+        // Populate Leaderboard
+        const leaderboard = document.getElementById('leaderboard-info');
+        if (analyticsData.rankings.length > 0) {
+            const userRanking = analyticsData.rankings[0];
+            leaderboard.innerHTML = `<strong>${userRanking.username}</strong> - Total Score: ${userRanking.total_score}`;
+        } else {
+            leaderboard.innerHTML = "No ranking data available.";
+        }
+
+        // Populate Category Performance
+        const categoryTable = document.getElementById('category-performance-body');
+        categoryTable.innerHTML = analyticsData.category_performance.map(category => 
+            `<tr>
+                <td>Category ${category.category_id}</td>
+                <td>${category.total_attempts}</td>
+                <td>${category.correct_answers ? "✔" : "❌"}</td>
+            </tr>`
+        ).join('');
+
+        // Populate Achievements & Streaks
+        const achievements = document.getElementById('achievements-info');
+        achievements.textContent = analyticsData.user_results.length > 5 ? "🔥 You're on a hot streak!" : "Keep playing to unlock streaks!";
+    });
+    </script>
+    </body>
 </html>
