@@ -21,7 +21,10 @@
             <nav class="navbar">
                 <a href="{{ url_for('main.home') }}" class="active">Home</a>
                 <a href="#">Contact Us</a>
-                <a href="#">Log out</a>
+                <a href="{{ url_for('main.logout') }}" class="btn btn-outline-light"
+                   onclick="return confirm('Are you sure you want to log out?');">
+                   Logout
+                </a>
             </nav>
         </header>
 

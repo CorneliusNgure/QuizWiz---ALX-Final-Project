@@ -34,10 +34,13 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark p-3">
-        <a class="navbar-brand" href="#">QuizWiz</a>
+        <a class="navbar-brand" href="{{ url_for('main.home') }}">QuizWiz</a>
         <div>
-            <a href="home.html" class="btn btn-outline-light">Home</a>
-            <a href="logout.html" class="btn btn-outline-light">Logout</a>
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-light">Home</a>
+            <a href="{{ url_for('main.logout') }}" class="btn btn-outline-light"
+               onclick="return confirm('Are you sure you want to log out?');">
+               Logout
+            </a>
         </div>
     </nav>
 
@@ -87,8 +90,8 @@
         </div>
 
         <div class="button-group">
-            <button class="btn btn-primary play-again-btn">Play Again</button>
-            <button class="btn btn-danger go-home-btn">Go Home</button>
+            <button class="btn btn-primary play-again-btn" onclick="window.location.href='{{ url_for('main.trivia_arena') }}';">Play Again</button>
+            <button class="btn btn-danger go-home-btn" onclick="window.location.href='{{ url_for('main.home') }}';">Go Home</button>
         </div>
     </div>
 
@@ -102,7 +105,7 @@
     document.addEventListener("DOMContentLoaded", function () {
     console.log("Fetched Analytics Data:", analyticsData);
 
-    // Populate Results Summary Table
+    // Populating Results Summary Table
     const resultsTable = document.getElementById('results-summary-body');
     resultsTable.innerHTML = analyticsData.user_results
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
@@ -116,13 +119,13 @@
             <td>${result.score}</td>
         </tr>`).join('');
 
-    // Populate Leaderboard
+    // Populating Leaderboard
     const leaderboardList = document.getElementById('leaderboard-list');
     leaderboardList.innerHTML = analyticsData.rankings.slice(0, 10).map(rank => 
         `<li class="list-group-item"><strong>${rank.username}</strong> - Score: ${rank.total_score}</li>`
     ).join('');
 
-    // Populate Category Strengths & Weaknesses Chart
+    // Populating Category Strengths & Weaknesses chart
     const categoryLabels = analyticsData.category_performance.map(c => c.category);
     const categoryData = analyticsData.category_performance.map(c => c.correct_answers);
 
@@ -144,14 +147,14 @@
         }
     });
 
-    // ✅ Populate Score Progression Chart (Line Chart)
+    // Populating Score Progression line chart
     const progressLabels = analyticsData.user_results
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Ensure chronological order
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) 
         .map(r => new Date(r.timestamp).toLocaleDateString()); // Format timestamp as date
 
     const progressData = analyticsData.user_results
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map(r => r.score); // Extract scores
+        .map(r => r.score); // Extracting scores
 
     new Chart(document.getElementById('progressChart').getContext('2d'), {
         type: 'line',

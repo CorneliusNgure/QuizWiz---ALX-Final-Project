@@ -60,6 +60,7 @@ def sign_in():
 def logout():
     session.pop("user_id", None)
     session.pop("username", None)
+    session.pop("email", None)
     flash("You have been logged out.", "info")
     return redirect(url_for("main.home"))
 
@@ -88,11 +89,11 @@ def fetch_questions():
         params = {
             "amount": 3,
             "category": category,  # Directly use the category ID from the frontend
-            "difficulty": difficulty,  # Pass difficulty as-is
-            "type": question_type,  # Pass type as-is
+            "difficulty": difficulty, 
+            "type": question_type, 
         }
 
-        print(f"Fetching questions with params: {params}")
+        # print(f"Fetching questions with params: {params}")
 
         # Fetch questions from Open Trivia API
         response = requests.get(base_url, params=params)
@@ -100,7 +101,6 @@ def fetch_questions():
         data = response.json()
         print(f"Data from API: {data}")
 
-        # Check if the API returned any questions
         if not data.get("results"):
             return jsonify({"message": "No questions found"}), 404
 
@@ -116,18 +116,18 @@ def fetch_questions():
             existing_question = Question.query.filter_by(question_text=item["question"]).first()
 
             if not existing_question:
-                # Map difficulty and type to their respective IDs
+                # Mapping difficulty and type to their respective IDs
                 difficulty_id = 1 if difficulty == "easy" else 2 if difficulty == "medium" else 3
                 type_id = 1 if question_type == "multiple" else 2
 
-                # Create a new Question object
+                # new Question object
                 new_question = Question(
                     question_text=question_text,
                     correct_answer=item["correct_answer"],
                     incorrect_answers=incorrect_answers,
-                    category_id=int(category),  # Store the category ID
-                    difficulty_id=difficulty_id,  # Map difficulty levels
-                    type_id=type_id,  # Map type IDs
+                    category_id=int(category),  
+                    difficulty_id=difficulty_id,  
+                    type_id=type_id,  
                 )
                 new_questions.append(new_question)
 
@@ -141,7 +141,7 @@ def fetch_questions():
             Question.category_id == int(category),
             Question.difficulty_id == difficulty_id,
             Question.type_id == type_id
-        ).limit(3).all()
+        ).limit(5).all()
 
         response_questions = [
             {
@@ -172,15 +172,15 @@ def submit_quiz():
         return jsonify({"error": "Unauthorized access"}), 401
 
     data = request.get_json()
-    print("Received data:", data)  # Debug incoming payload
+    # print("Received data:", data) 
     
     if not data or "answers" not in data:
-        print("Invalid input received.")
+        # print("Invalid input received.")
         return jsonify({"error": "Invalid input"}), 400
 
     user_id = session["user_id"]
     answers = data["answers"]
-    print("Answers received:", answers)
+    # print("Answers received:", answers)
 
     user = User.query.get(user_id)
     if not user:
@@ -198,7 +198,7 @@ def submit_quiz():
     difficulty_id = first_question.difficulty_id
     type_id = first_question.type_id
 
-    # Create a new quiz session
+    # Creating a new quiz session
     quiz_session = QuizSession(
         user_id=user_id,
         category_id=category_id,
@@ -228,7 +228,7 @@ def submit_quiz():
         correct_answer = question.correct_answer if question.correct_answer else ""
         is_correct = (user_answer.strip().lower() == correct_answer.strip().lower())
 
-        # fetch questions from scoring table
+        # fetching questions from scoring table
         scoring_rule = Scoring.query.filter_by(
             # category_id=question.category_id,
             difficulty_id=question.difficulty_id,
@@ -238,7 +238,7 @@ def submit_quiz():
         points_awarded = scoring_rule.points if scoring_rule and is_correct else 0
         total_score += points_awarded
 
-        # Save the question attempt
+        # Saving the question attempt
         question_attempt = QuestionAttempt(
             quiz_session_id=quiz_session.id,
             question_id=question.id,
@@ -248,7 +248,7 @@ def submit_quiz():
         )
         db.session.add(question_attempt)
 
-    # Update the quiz session's score
+    # Updating the quiz session's score
     quiz_session.score = total_score
     db.session.commit()
 
@@ -261,23 +261,23 @@ def submit_quiz():
 @main_bp.route("/analytics", methods=["GET"])
 def analytics():
     if "user_id" not in session:
-        return redirect(url_for("auth.login"))  # Redirect to login if not authenticated
+        return redirect(url_for("auth.login"))
 
     user_id = session["user_id"]
-    print(f"Fetching analytics for user_id: {user_id}")
+    # print(f"Fetching analytics for user_id: {user_id}")
 
+    # Converting Decimal to int or float.
     def serialize_decimal(value):
-        """Convert Decimal to int or float."""
         if isinstance(value, Decimal):
             return int(value) if value % 1 == 0 else float(value)
         return value
 
+    # Converting datetime to string (ISO format)
     def serialize_datetime(value):
-        """Convert datetime to string (ISO format)."""
         return value.isoformat() if isinstance(value, datetime) else value
 
     try:
-        # Fetch user rankings
+        # Fetching user rankings
         rankings = db.session.query(
             User.username, func.sum(QuizSession.score).label("total_score")
         ).join(QuizSession).group_by(User.id).order_by(desc("total_score")).all()
@@ -288,12 +288,12 @@ def analytics():
         rankings = []
 
     try:
-        # Fetch category, difficulty, and type mappings
+        # Fetching category, difficulty, and type mappings
         category_map = {c.id: c.name for c in db.session.query(QuestionCategory.id, QuestionCategory.name).all()}
         difficulty_map = {d.id: d.level for d in db.session.query(QuestionDifficulty.id, QuestionDifficulty.level).all()}
         type_map = {t.id: t.type for t in db.session.query(QuestionType.id, QuestionType.type).all()}
 
-        # Fetch user quiz results (join to get category, difficulty, type)
+        # Fetching user quiz results (join to get category, difficulty, type)
         user_results = (
             db.session.query(
                 QuizSession.id,
@@ -311,7 +311,7 @@ def analytics():
                 .all()
                 )
 
-        # Convert to readable format instead of IDs
+        # Converting to readable format instead of IDs
         user_results = [
             {
                 "quiz_id": r.id,
@@ -324,11 +324,11 @@ def analytics():
             for r in user_results
         ]
     except Exception as e:
-        print(f"Error fetching user results: {e}")
+        # print(f"Error fetching user results: {e}")
         user_results = []
 
     try:
-        # Fetch performance breakdown by difficulty
+        # Fetching performance breakdown by difficulty
         difficulty_performance = (
             db.session.query(
                 Question.difficulty_id,
@@ -354,7 +354,7 @@ def analytics():
         difficulty_performance = []
 
     try:
-        # Fetch category performance
+        # Fetching category performance
         category_performance = (
             db.session.query(
                 Question.category_id,
@@ -379,7 +379,7 @@ def analytics():
         print(f"Error fetching category performance: {e}")
         category_performance = []
 
-    # Calculate quiz summary
+    # Calculating the quiz summary
     total_quizzes = len(user_results)
     average_score = (
         sum([r["score"] if r["score"] is not None else 0 for r in user_results]) / total_quizzes
@@ -391,7 +391,7 @@ def analytics():
         "average_score": round(average_score, 2)
     }
 
-    # Calculate score trend
+    # Calculating the score trend
     if total_quizzes > 1:
         first_half = user_results[:total_quizzes // 2]
         second_half = user_results[total_quizzes // 2:]
@@ -403,7 +403,7 @@ def analytics():
     else:
         score_trend = "insufficient data"
 
-    # Convert analytics data to JSON and pass it to the template
+    # Converting analytics data to JSON and pass it to the template
     analytics_data = json.dumps({
         "rankings": rankings,
         "user_results": user_results,
@@ -413,7 +413,6 @@ def analytics():
         "score_trend": score_trend
     })
 
-    print("-------------------------------------------------")
-    print("Analytics Data:", analytics_data)
+    # print("Analytics Data:", analytics_data)
 
     return render_template("analytics.html", analytics_data=analytics_data)

@@ -36,20 +36,6 @@
     <p>Sign in to continue your quiz journey, track progress, and earn more rewards!</p>
   </section>
 
-  <!-- Flash Messages -->
-  <!-- <div class="flash-container">
-    {% with messages = get_flashed_messages(with_categories=True) %}
-    {% if messages %}
-      {% for category, message in messages %}
-      <div class="flash-message flash-{{ category }}">
-        <span>{{ message }}</span>
-        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
-      </div>
-      {% endfor %}
-    {% endif %}
-    {% endwith %}
-  </div> -->
-
   <!-- Sign-in Form -->
   <section class="signin-form">
     <h2 class="text-center">Sign In to QuizWiz</h2>
@@ -68,7 +54,6 @@
   <!-- Flash Messages -->
   {% include '_flash_messages.html' %}
 
-  <!-- Footer -->
     <footer class="footer">
       <p>&copy; 2024 QuizWiz. All rights reserved.</p>
       <div class="social-icons">

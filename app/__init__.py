@@ -29,11 +29,9 @@ def create_app():
     app.config.from_object(ENV_CONFIGS.get(ENV, DevelopmentConfig))
     app.debug = app.config['DEBUG']
 
-    # warning if FLASK_ENV is not set
     if not os.getenv("FLASK_ENV"):
         app.logger.warning("FLASK_ENV not set, defaulting to 'development'")
 
-    # setting the SECRET_KEY
     app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
     # Initialization of extensions
