@@ -104,7 +104,9 @@
 
         // Populate Results Summary Table
         const resultsTable = document.getElementById('results-summary-body');
-        resultsTable.innerHTML = analyticsData.user_results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        resultsTable.innerHTML = analyticsData.user_results
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 5)
             .map(result => `
             <tr>
                 <td>${result.quiz_id}</td>
@@ -116,12 +118,12 @@
 
         // Populate Leaderboard
         const leaderboardList = document.getElementById('leaderboard-list');
-        leaderboardList.innerHTML = analyticsData.rankings.slice(0, 3).map(rank => 
+        leaderboardList.innerHTML = analyticsData.rankings.slice(0, 10).map(rank => 
             `<li class="list-group-item"><strong>${rank.username}</strong> - Score: ${rank.total_score}</li>`
         ).join('');
 
         // Populate Category Strengths & Weaknesses Chart
-        const categoryLabels = analyticsData.category_performance.map(c => c.category_name);
+        const categoryLabels = analyticsData.category_performance.map(c => c.category);
         const categoryData = analyticsData.category_performance.map(c => c.correct_answers);
 
         new Chart(document.getElementById('categoryChart').getContext('2d'), {

@@ -299,18 +299,19 @@ def analytics():
                 QuizSession.id,
                 QuizSession.score,
                 QuizSession.created_at,
-                Question.category_id,
-                Question.difficulty_id,
-                Question.type_id
-            )
-            .join(QuestionAttempt, QuizSession.id == QuestionAttempt.quiz_session_id)
-            .join(Question, Question.id == QuestionAttempt.question_id)
-            .filter(QuizSession.user_id == user_id)
-            .order_by(desc(QuizSession.created_at))
-            .all()
-        )
+                func.min(Question.category_id).label("category_id"),  # Pick one category
+                func.min(Question.difficulty_id).label("difficulty_id"),  # Pick one difficulty
+                func.min(Question.type_id).label("type_id")  # Pick one type
+                )
+                .join(QuestionAttempt, QuizSession.id == QuestionAttempt.quiz_session_id)
+                .join(Question, Question.id == QuestionAttempt.question_id)
+                .filter(QuizSession.user_id == user_id)
+                .group_by(QuizSession.id, QuizSession.score, QuizSession.created_at)  # Group by quiz session
+                .order_by(desc(QuizSession.created_at))
+                .all()
+                )
 
-        # Convert to human-readable format
+        # Convert to readable format instead of IDs
         user_results = [
             {
                 "quiz_id": r.id,
