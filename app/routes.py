@@ -163,7 +163,7 @@ def fetch_questions():
         return jsonify({"message": f"Failed to fetch questions: {str(e)}"}), 500
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
-        return jsonify({"message": "An unexpected error occurred"}), 500
+        return jsonify({"message": "Failed to fetch questions"}), 500
 
 
 @main_bp.route("/submit_quiz", methods=["POST"])
