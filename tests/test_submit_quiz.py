@@ -55,7 +55,7 @@ def test_submit_quiz_invalid_input(logged_in_client):
 def test_submit_quiz_user_not_found(client, db_session):
     """Test quiz submission when user is not found."""
     with client.session_transaction() as sess:
-        sess['user_id'] = 999  # Non-existent user ID
+        sess['user_id'] = 999 
 
     response = client.post('/submit_quiz', json={"answers": []})
 

@@ -7,7 +7,7 @@ from datetime import datetime
 
 @pytest.fixture
 def client():
-    app = create_app('testing')  # Assumes you have a testing configuration
+    app = create_app('testing') 
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
@@ -56,7 +56,7 @@ def test_analytics_authenticated(client, setup_user):
 
 def test_analytics_unauthenticated(client):
     response = client.get('/analytics')
-    assert response.status_code == 302  # Should redirect to login
+    assert response.status_code == 302 
     assert url_for('auth.login') in response.headers['Location']
 
 def test_analytics_no_data(client, setup_user):
