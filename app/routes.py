@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
+from app import db, mail
 from .models import User, QuizSession, QuestionAttempt, Question, Scoring, QuestionCategory, QuestionDifficulty, QuestionType
 import requests
 import html
@@ -8,7 +8,16 @@ from decimal import Decimal
 from datetime import datetime
 import json
 from sqlalchemy import desc, func
+from flask_mail import Message
+from itsdangerous import URLSafeTimedSerializer
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Define the serializer using the secret key
+s = URLSafeTimedSerializer(SECRET_KEY)
 
 # Blueprint definition
 main_bp = Blueprint("main", __name__)
@@ -416,3 +425,51 @@ def analytics():
     # print("Analytics Data:", analytics_data)
 
     return render_template("analytics.html", analytics_data=analytics_data)
+
+
+@main_bp.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"]
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            token = s.dumps(email, salt="password-reset-salt")
+            reset_url = url_for("main.reset_password", token=token, _external=True)
+
+            # Send email with reset link
+            msg = Message("Password Reset Request", recipients=[email])
+            msg.body = f"Click the link to reset your password: {reset_url}"
+            print("Attempting to send email...")
+            mail.send(msg)
+            print("Email sent successfully!")
+
+            flash("A password reset link has been sent to your email.", "info")
+        else:
+            flash("Email not found. Please check again.", "danger")
+        return redirect(url_for("main.forgot_password"))
+
+    return render_template("forgot_password.html")
+
+
+@main_bp.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = s.loads(token, salt="password-reset-salt", max_age=3600)  # Token expires in 1 hour
+    except:
+        flash("The password reset link is invalid or has expired.", "danger")
+        return redirect(url_for("main.forgot_password"))
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        flash("Invalid email address.", "danger")
+        return redirect(url_for("main.forgot_password"))
+
+    if request.method == "POST":
+        new_password = request.form["password"]
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        flash("Your password has been reset. You can now sign in.", "success")
+        return redirect(url_for("main.sign_in"))
+
+    return render_template("reset_password.html")

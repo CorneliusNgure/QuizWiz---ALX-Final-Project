@@ -4,13 +4,15 @@ import os
 import logging
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate, upgrade
+from flask_mail import Mail  # Import Flask-Mail
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+# Loading environment variables from .env
 load_dotenv()
 
 db = SQLAlchemy()
 migrate = Migrate()
+mail = Mail()  # Initialize mail instance
 
 def create_app():
     """Application factory pattern"""
@@ -38,8 +40,9 @@ def create_app():
     # Initialization of extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    mail.init_app(app)  # Initialize Flask-Mail
 
-    # logging levels
+    # Logging levels
     if ENV == "development":
         app.logger.setLevel(logging.DEBUG)
     elif ENV == "testing":
